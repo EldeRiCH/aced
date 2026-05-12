@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Aced — Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #12121f;
+    --surface-2: #1a1a2a;
+    --accent: #6c63ff;
+    --accent-2: #8b85ff;
+    --accent-glow: rgba(108, 99, 255, 0.18);
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --rose: #f43f5e;
+    --teal: #14b8a6;
+    --sky: #38bdf8;
+    --lime: #84cc16;
+    --text: #f0f0f5;
+    --text-2: #8888aa;
+    --text-3: #5a5a78;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-2: rgba(255, 255, 255, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #050509;
+    color: var(--text);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Ambient backdrop — only visible on desktop */
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    position: relative;
+    background:
+      radial-gradient(ellipse 800px 600px at 30% 20%, rgba(108, 99, 255, 0.10), transparent 60%),
+      radial-gradient(ellipse 600px 500px at 80% 80%, rgba(20, 184, 166, 0.06), transparent 60%),
+      #050509;
+  }
+
+  /* Mobile: full-bleed, no frame chrome */
+  @media (max-width: 640px) {
+    .stage { padding: 0; background: var(--bg); }
+    .frame-wrap { width: 100vw !important; height: 100vh !important; }
+    .frame-wrap .ios-device { display: none; }
+    .frame-wrap .mobile-shell { display: block !important; }
+  }
+
+  .frame-wrap {
+    position: relative;
+  }
+
+  .mobile-shell {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg);
+  }
+
+  /* Side navigation arrows (desktop only) */
+  .side-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-2);
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.18s ease;
+    backdrop-filter: blur(20px);
+  }
+  .side-nav:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); transform: translateY(-50%) scale(1.05); }
+  .side-nav:disabled { opacity: 0.3; cursor: not-allowed; transform: translateY(-50%); }
+  .side-nav.prev { left: max(32px, calc(50% - 280px)); }
+  .side-nav.next { right: max(32px, calc(50% - 280px)); }
+  @media (max-width: 640px) { .side-nav { display: none; } }
+
+  /* The screen (390x844 logical) */
+  .screen {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Step indicator */
+  .stepper {
+    display: flex;
+    gap: 6px;
+    padding: 64px 24px 14px;
+    align-items: center;
+  }
+  .stepper.mobile { padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+  .step-bar {
+    flex: 1;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    position: relative;
+  }
+  .step-bar.done::after,
+  .step-bar.active::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--accent);
+    border-radius: 3px;
+    transform-origin: left;
+    animation: fill 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .step-bar.done::after { animation: none; }
+  @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  /* Headings */
+  h1.title {
+    font-size: 30px; font-weight: 800; line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--text-2);
+    font-size: 16px; line-height: 1.45;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    width: 100%;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.18) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+      0 10px 30px -8px rgba(108, 99, 255, 0.55),
+      0 2px 0 rgba(60, 50, 200, 0.4);
+    transition: transform 0.12s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-3);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 12px;
+  }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* Reset button defaults so children inherit text color + font */
+  button { font-family: inherit; color: inherit; }
+
+  /* Selectable cards */
+  .opt-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex; flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .opt-card:hover {
+    border-color: rgba(108, 99, 255, 0.3);
+    transform: translateY(-1px);
+  }
+  .opt-card.selected {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(108, 99, 255, 0.13), rgba(108, 99, 255, 0.04));
+    box-shadow:
+      0 0 0 3px var(--accent-glow),
+      0 10px 30px -10px rgba(108, 99, 255, 0.4);
+  }
+  .opt-card .icon-wrap {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .opt-card.selected .icon-wrap {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 6px 20px -6px var(--accent);
+  }
+  .opt-card .label {
+    font-size: 15px; font-weight: 600;
+  }
+  .opt-card .sub {
+    font-size: 12px; color: var(--text-2);
+    line-height: 1.35;
+  }
+
+  /* Input */
+  .input {
+    width: 100%;
+    height: 52px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+    padding: 0 16px;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .input::placeholder { color: var(--text-3); }
+
+  /* Chip */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 10px 8px 12px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.18s;
+    animation: chip-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+  .chip .x {
+    width: 18px; height: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 11px;
+    margin-left: 2px;
+  }
+  .chip .x:hover { background: rgba(255, 100, 100, 0.15); color: #f87171; }
+  @keyframes chip-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+
+  /* Deadline row */
+  .deadline-row {
+    display: flex; align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color 0.18s;
+  }
+  .deadline-row:hover { border-color: var(--border-2); }
+  .deadline-row .swatch {
+    width: 10px; height: 38px; border-radius: 3px; flex-shrink: 0;
+  }
+  .deadline-row .name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .deadline-row .meta {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 2px;
+  }
+  .deadline-row .date-pill {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .deadline-row .date-pill:hover { background: rgba(255, 255, 255, 0.08); }
+
+  /* Slider */
+  .slider-wrap { position: relative; padding: 16px 0 12px; }
+  .slider-track {
+    position: relative;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+  }
+  .slider-fill {
+    position: absolute; top: 0; bottom: 0; left: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 6px;
+    box-shadow: 0 0 16px rgba(108, 99, 255, 0.5);
+  }
+  .slider-thumb {
+    position: absolute; top: 50%;
+    width: 26px; height: 26px;
+    border-radius: 999px;
+    background: white;
+    border: 2px solid var(--accent);
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 6px rgba(108, 99, 255, 0.12);
+    transition: box-shadow 0.18s;
+  }
+  .slider-thumb:active { cursor: grabbing; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 12px rgba(108, 99, 255, 0.18); }
+  .slider-input {
+    position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer;
+  }
+  .slider-labels {
+    display: flex; justify-content: space-between;
+    margin-top: 14px;
+    font-size: 11px; color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Day pill picker (calendar) */
+  .cal-pop {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    width: 260px;
+    background: #1c1c2e;
+    border: 1px solid var(--border-2);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    z-index: 50;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .cal-hd {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-3);
+    font-weight: 600;
+    padding: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .cal-d {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-d:hover { background: rgba(255, 255, 255, 0.06); }
+  .cal-d.dim { color: var(--text-3); }
+  .cal-d.sel { background: var(--accent); color: white; font-weight: 700; }
+  .cal-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+  .cal-hdr .m { font-size: 13px; font-weight: 700; }
+  .cal-hdr button {
+    background: none; border: none; color: var(--text-2);
+    width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-hdr button:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+
+  /* Screen 5 — Magic */
+  .magic-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 50% -10%, rgba(108, 99, 255, 0.22), transparent 60%),
+      radial-gradient(ellipse 400px 300px at 80% 30%, rgba(20, 184, 166, 0.10), transparent 70%),
+      radial-gradient(ellipse 400px 300px at 20% 90%, rgba(245, 158, 11, 0.06), transparent 70%);
+    pointer-events: none;
+    opacity: 0;
+    animation: magic-glow 1.2s ease-out 0.1s forwards;
+  }
+  @keyframes magic-glow { to { opacity: 1; } }
+
+  .week-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .day-row {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    gap: 10px;
+    padding: 8px 4px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    opacity: 0;
+    animation: row-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .day-row:last-child { border-bottom: none; }
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .day-label {
+    display: flex; flex-direction: column;
+  }
+  .day-label .d {
+    font-size: 13px; font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .day-label .dt {
+    font-size: 10px;
+    color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 1px;
+  }
+  .day-label.today .d { color: var(--accent-2); }
+  .day-blocks {
+    display: flex; gap: 6px;
+    flex-wrap: wrap;
+    min-height: 36px;
+    align-items: center;
+  }
+
+  .session-block {
+    display: flex; align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+    animation: block-in 0.6s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+  }
+  @keyframes block-in { to { opacity: 1; transform: translateY(0) scale(1); } }
+  .session-block .sb-bar {
+    width: 3px; align-self: stretch; border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .session-block .sb-body { flex: 1; min-width: 0; }
+  .session-block .sb-name {
+    font-size: 13px; font-weight: 600;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .session-block .sb-time {
+    font-size: 10.5px;
+    color: var(--text-2);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 1px;
+    white-space: nowrap;
+  }
+  .session-block .spark {
+    font-size: 11px;
+    color: var(--accent);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .free-pill {
+    font-size: 11px;
+    color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  /* Shimmer sweep */
+  .shimmer {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -40%;
+    width: 40%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(108, 99, 255, 0.0) 10%,
+      rgba(108, 99, 255, 0.18) 40%,
+      rgba(139, 133, 255, 0.32) 50%,
+      rgba(108, 99, 255, 0.18) 60%,
+      transparent 90%
+    );
+    pointer-events: none;
+    animation: shimmer-sweep 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    mix-blend-mode: screen;
+  }
+  @keyframes shimmer-sweep {
+    0% { left: -40%; }
+    100% { left: 110%; }
+  }
+
+  /* Subtle continuous shimmer (ambient) */
+  .week-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 30%,
+      rgba(108, 99, 255, 0.04) 50%,
+      transparent 70%
+    );
+    background-size: 200% 200%;
+    animation: ambient 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes ambient {
+    0%, 100% { background-position: 200% 200%; }
+    50% { background-position: 0% 0%; }
+  }
+
+  /* Stat strip on screen 5 */
+  .magic-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .stat {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .stat .n {
+    font-size: 18px; font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .stat .l {
+    font-size: 9.5px;
+    color: var(--text-2);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  /* Color legend */
+  .legend {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    margin-top: 12px;
+    padding: 0 4px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    color: var(--text-2);
+  }
+  .legend-item .lg-dot {
+    width: 8px; height: 8px; border-radius: 999px;
+  }
+
+  /* Share link */
+  .share-link {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    color: var(--text-2);
+    font-size: 13px;
+    cursor: pointer;
+    background: none; border: none; font-family: inherit;
+    padding: 8px;
+    transition: color 0.15s;
+  }
+  .share-link:hover { color: var(--text); }
+
+  /* Footer area */
+  .footer {
+    padding: 16px 24px 28px;
+    background: linear-gradient(180deg, transparent, rgba(8, 8, 16, 0.9) 30%, var(--bg));
+  }
+
+  /* Scrollable content */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    padding-top: 24px;
+    scrollbar-width: thin;
+  }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+
+  /* Slide transitions */
+  .slide-enter {
+    animation: slide-in 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Mini swipe nav (mobile) */
+  .skip-link {
+    position: absolute;
+    top: 84px;
+    left: 18px;
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    z-index: 10;
+    padding: 6px 10px 6px 8px;
+    font-family: inherit;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+  .skip-link:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+  .skip-link:hover { color: var(--text); }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(28, 28, 46, 0.95);
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    animation: toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="aced-icons.jsx"></script>
+  <script type="text/babel" src="aced-screens.jsx"></script>
+  <script type="text/babel">
+// Top-level app: state, step indicator, frame, navigation, Tweaks panel.
+
+const { useState: useStateApp, useEffect: useEffectApp } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "#6c63ff",
+  "density": "cozy",
+  "showStats": true,
+  "showSparkles": true,
+  "showFrame": "on"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [step, setStep] = useStateApp(0);
+  const [data, setData] = useStateApp({
+    level: 'alvl',
+    subjects: [
+      { id: 1, name: 'Biology', color: 'teal',   date: new Date(2026, 5, 12).toISOString() },
+      { id: 2, name: 'Maths',   color: 'violet', date: new Date(2026, 5, 18).toISOString() },
+      { id: 3, name: 'History', color: 'amber',  date: new Date(2026, 5, 5).toISOString()  },
+    ],
+    style: 'morning',
+    hours: 15,
+  });
+
+  const [tweaks, setTweaks] = useStateApp(TWEAK_DEFAULTS);
+  const [tweaksOpen, setTweaksOpen] = useStateApp(false);
+
+  // Apply accent CSS variable from tweaks
+  useEffectApp(() => {
+    document.documentElement.style.setProperty('--accent', tweaks.accent);
+    // derive a slightly lighter "accent-2"
+    document.documentElement.style.setProperty('--accent-2', tweaks.accent === '#6c63ff' ? '#8b85ff' : tweaks.accent);
+    const c = tweaks.accent.replace('#','');
+    const r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+    document.documentElement.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.18)`);
+  }, [tweaks.accent]);
+
+  // Tweaks host protocol
+  useEffectApp(() => {
+    const onMsg = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const setTweak = (k, v) => {
+    setTweaks(t => ({ ...t, [k]: v }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  const TOTAL = 5;
+  const next = () => setStep(s => Math.min(s + 1, TOTAL - 1));
+  const back = () => setStep(s => Math.max(s - 1, 0));
+  const finish = () => setStep(0); // loop for prototype
+
+  const renderScreen = () => {
+    const props = { data, setData, onNext: next };
+    switch (step) {
+      case 0: return <ScreenLevel {...props} />;
+      case 1: return <ScreenSubjects {...props} />;
+      case 2: return <ScreenDeadlines {...props} />;
+      case 3: return <ScreenStyle {...props} onGenerate={next} />;
+      case 4: return <ScreenMagic data={data} tweaks={tweaks} onFinish={finish} />;
+      default: return null;
+    }
+  };
+
+  const screenInner = (
+    <div className="screen">
+      {/* Step indicator */}
+      <div className="stepper">
+        {Array.from({ length: TOTAL }).map((_, i) => (
+          <div
+            key={i}
+            className={`step-bar ${i < step ? 'done' : ''} ${i === step ? 'active' : ''}`}
+          />
+        ))}
+      </div>
+
+      {/* Skip on screens 1-3 */}
+      {step > 0 && step < 4 && (
+        <button className="skip-link" onClick={back}>
+          <Icon.ChevL /> Back
+        </button>
+      )}
+
+      <div key={step} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {renderScreen()}
+      </div>
+    </div>
+  );
+
+  // Determine whether to show device frame
+  const [isMobile, setIsMobile] = useStateApp(typeof window !== 'undefined' && window.innerWidth <= 640);
+  useEffectApp(() => {
+    const r = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener('resize', r);
+    return () => window.removeEventListener('resize', r);
+  }, []);
+
+  const useFrame = tweaks.showFrame === 'on' ? true : tweaks.showFrame === 'off' ? false : !isMobile;
+
+  return (
+    <>
+      <div className="stage">
+        {useFrame ? (
+          <div className="frame-wrap ios-device-wrap">
+            <IOSDevice width={402} height={874} dark={true}>
+              {screenInner}
+            </IOSDevice>
+          </div>
+        ) : (
+          <div className="frame-wrap" style={{ width: '100%', height: '100vh' }}>
+            <div className="mobile-shell" style={{ display: 'block' }}>{screenInner}</div>
+          </div>
+        )}
+
+        {/* Side nav arrows (desktop only) */}
+        {useFrame && (
+          <>
+            <button className="side-nav prev" onClick={back} disabled={step === 0} aria-label="Back">
+              <Icon.ChevL />
+            </button>
+            <button className="side-nav next" onClick={next} disabled={step === TOTAL - 1} aria-label="Next">
+              <Icon.ChevR />
+            </button>
+          </>
+        )}
+      </div>
+
+      {tweaksOpen && (
+        <TweaksPanel
+          tweaks={tweaks}
+          setTweak={setTweak}
+          step={step}
+          setStep={setStep}
+          onClose={() => {
+            setTweaksOpen(false);
+            window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function TweaksPanel({ tweaks, setTweak, step, setStep, onClose }) {
+  const accents = [
+    { name: 'Violet (default)', value: '#6c63ff' },
+    { name: 'Indigo',           value: '#5b8def' },
+    { name: 'Coral',            value: '#ff6b6b' },
+    { name: 'Mint',             value: '#10b981' },
+  ];
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 24, right: 24,
+      width: 280,
+      background: '#13131f',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: 16,
+      padding: 16,
+      boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+      zIndex: 1000,
+      color: '#f0f0f5',
+      fontFamily: 'Inter, sans-serif',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>Tweaks</div>
+        <button onClick={onClose} style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: 'none',
+          color: '#8888aa',
+          width: 24, height: 24, borderRadius: 6,
+          cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}><Icon.Close /></button>
+      </div>
+
+      {/* Jump to step */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: '#8888aa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+          Jump to step
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {[1,2,3,4,5].map(n => (
+            <button
+              key={n}
+              onClick={() => setStep(n - 1)}
+              style={{
+                flex: 1,
+                background: step === n - 1 ? tweaks.accent : 'rgba(255,255,255,0.04)',
+                border: '1px solid ' + (step === n - 1 ? tweaks.accent : 'rgba(255,255,255,0.07)'),
+                color: step === n - 1 ? 'white' : '#f0f0f5',
+                padding: '8px 0',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >{n}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Accent */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: '#8888aa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+          Accent
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {accents.map(a => (
+            <button
+              key={a.value}
+              onClick={() => setTweak('accent', a.value)}
+              title={a.name}
+              style={{
+                flex: 1,
+                aspectRatio: '1',
+                background: a.value,
+                border: tweaks.accent === a.value ? '2px solid white' : '2px solid transparent',
+                borderRadius: 10,
+                cursor: 'pointer',
+                boxShadow: tweaks.accent === a.value ? `0 0 0 2px ${a.value}, 0 4px 12px ${a.value}66` : 'none',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Frame */}
+      <div style={{ marginBottom: 4 }}>
+        <div style={{ fontSize: 11, color: '#8888aa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+          Device frame
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {[
+            { v: 'auto', l: 'Auto' },
+            { v: 'on',   l: 'iPhone' },
+            { v: 'off',  l: 'Fullscreen' },
+          ].map(o => (
+            <button
+              key={o.v}
+              onClick={() => setTweak('showFrame', o.v)}
+              style={{
+                flex: 1,
+                background: tweaks.showFrame === o.v ? 'rgba(108, 99, 255, 0.2)' : 'rgba(255,255,255,0.04)',
+                border: '1px solid ' + (tweaks.showFrame === o.v ? tweaks.accent : 'rgba(255,255,255,0.07)'),
+                color: tweaks.showFrame === o.v ? tweaks.accent : '#f0f0f5',
+                padding: '8px 0',
+                borderRadius: 8,
+                fontSize: 11.5,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >{o.l}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+  </script>
+</body>
+</html>
