@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Aced — Goals &amp; Habits</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{
+  --bg:#FAFAFE;--bg2:#FFFFFF;--bg3:#F0EEFF;
+  --violet:#6C63FF;--violet-d:#4F46E5;--violet-l:#8B84FF;
+  --teal:#2DD4BF;--amber:#F59E0B;--red:#EF4444;
+  --green:#10B981;
+  --text:#1C1640;--t2:#5C5790;--t3:#9B97C4;--t4:#CCC9E8;
+  --bd:rgba(108,99,255,.14);--bd-s:rgba(108,99,255,.35);
+  --sh-sm:0 1px 8px rgba(91,80,214,.08);--sh:0 4px 20px rgba(91,80,214,.11);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satoshi',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:0;height:0}
+.clash{font-family:'Clash Display',system-ui,sans-serif}
+.blob{position:fixed;pointer-events:none;filter:blur(80px);border-radius:50%;z-index:0}
+.blob1{width:50vw;height:55vh;top:-12%;right:-8%;background:radial-gradient(ellipse,rgba(139,132,255,.15),transparent 70%);animation:drift1 18s ease-in-out infinite}
+.blob2{width:42vw;height:48vh;bottom:-12%;left:-6%;background:radial-gradient(ellipse,rgba(108,99,255,.09),transparent 70%);animation:drift2 22s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}33%{transform:translate(-20px,16px)}66%{transform:translate(14px,-10px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-20px)}}
+.dot-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(108,99,255,.06) 1px,transparent 1px);background-size:28px 28px}
+
+#devbar{position:relative;z-index:10;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 16px;background:rgba(255,255,255,.9);border-bottom:1px solid var(--bd);backdrop-filter:blur(12px)}
+.devbar-grp{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:3px}
+.dev-btn{display:flex;align-items:center;padding:5px 12px;border-radius:6px;border:none;background:transparent;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .16s}
+.dev-btn:hover{color:var(--text);background:rgba(108,99,255,.07)}
+.dev-btn.active{background:rgba(108,99,255,.12);color:var(--violet);border:1px solid rgba(108,99,255,.22)}
+
+#app{position:relative;z-index:1;display:flex;height:calc(100vh - 42px)}
+#sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);box-shadow:var(--sh-sm);display:flex;flex-direction:column;padding:22px 14px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:14px;font-weight:500;color:var(--t2);text-decoration:none;cursor:pointer;transition:background .16s,color .16s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.08);color:var(--violet);font-weight:600}
+
+/* Goal card */
+.goal-card{background:var(--bg2);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh-sm);overflow:hidden;transition:box-shadow .2s,transform .2s;position:relative}
+.goal-card:hover{box-shadow:var(--sh);transform:translateY(-2px)}
+.goal-card-top{height:4px;width:100%}
+.goal-card-body{padding:16px 18px}
+
+/* Progress bar */
+.prog-track{height:6px;background:rgba(108,99,255,.08);border-radius:6px;margin:12px 0 10px;}
+.prog-fill{height:6px;border-radius:6px;transition:width .8s ease}
+
+/* Sub-task */
+.subtask{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;cursor:pointer}
+.subtask:hover{opacity:.8}
+.subtask-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--t4);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .16s}
+.subtask.done .subtask-box{background:var(--violet);border-color:var(--violet);}
+.subtask.done span{color:var(--t4);text-decoration:line-through}
+.subtask.progress .subtask-box{border-color:var(--violet);background:rgba(108,99,255,.08);}
+.subtask.progress span{color:var(--t2)}
+.subtask.todo .subtask-box{border-color:var(--t4);}
+.subtask.todo span{color:var(--t3)}
+
+/* 3-dot menu */
+.dot-menu{position:relative}
+.dot-menu-btn{background:transparent;border:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--t3);display:flex;align-items:center;justify-content:center;transition:background .16s}
+.dot-menu-btn:hover{background:var(--bg3);color:var(--t2)}
+.dot-menu-pop{position:absolute;right:0;top:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:4px;min-width:130px;box-shadow:var(--sh);z-index:20;display:none}
+.dot-menu-pop.open{display:block}
+.dot-menu-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;transition:background .14s}
+.dot-menu-opt:hover{background:var(--bg3);color:var(--text)}
+
+/* AI button */
+.btn-ai{display:flex;align-items:center;gap:5px;background:transparent;border:1.5px dashed rgba(108,99,255,.3);border-radius:8px;color:var(--violet);font-family:'Satoshi',sans-serif;font-size:11px;font-weight:600;padding:6px 10px;cursor:pointer;width:100%;justify-content:center;transition:all .16s;margin-top:10px}
+.btn-ai:hover{border-color:var(--violet);background:rgba(108,99,255,.05)}
+.btn-ai-locked{opacity:.5;cursor:not-allowed}
+
+/* Add button */
+.btn-add-goal{display:flex;align-items:center;gap:5px;background:transparent;border:1.5px solid var(--bd);border-radius:9px;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;padding:7px 13px;cursor:pointer;transition:all .16s}
+.btn-add-goal:hover{border-color:var(--bd-s);color:var(--text);background:var(--bg3)}
+
+/* Habit row */
+.habit-row{display:flex;align-items:center;gap:0;padding:12px 16px;border-radius:12px;transition:background .16s;cursor:pointer}
+.habit-row:hover{background:var(--bg3)}
+.habit-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--t4);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .16s}
+.habit-check.done{background:var(--violet);border-color:var(--violet);}
+.habit-check.missed{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);}
+.habit-check.future{background:transparent;border-color:var(--t4);border-style:dashed;}
+
+/* Heatmap */
+.heat-week{display:flex;flex-direction:column;gap:3px;flex:1}
+.heat-cell{width:100%;border-radius:3px;cursor:pointer;transition:opacity .15s;position:relative}
+.heat-cell:hover{opacity:.75}
+.heat-cell[title]:hover::after{content:attr(title);position:absolute;bottom:calc(100%+4px);left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font-size:10px;font-weight:500;padding:3px 7px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:50;font-family:'Satoshi',sans-serif}
+</style>
+</head>
+<body>
+
+<div class="dot-grid"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<div id="devbar">
+  <div class="devbar-grp">
+    <a class="dev-btn" href="Dashboard.html">Dashboard</a>
+    <a class="dev-btn" href="Planner.html">Planner</a>
+    <a class="dev-btn active" href="Goals.html">Goals &amp; Habits</a>
+    <a class="dev-btn" href="Timer.html">Focus Timer</a>
+  </div>
+  <span style="width:1px;height:18px;background:var(--bd);margin:0 8px;"></span>
+  <span style="font-size:11px;color:var(--t3);font-weight:500;">Aced · Web App</span>
+</div>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px;margin-bottom:32px;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6C63FF,#8B84FF);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(108,99,255,.35);flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M9 1.5L2 16.5h3.8l1.6-3.8h3.2l1.6 3.8H16ZM9 6l1.2 3.6H7.8Z" fill="white"/></svg></div>
+      <span class="clash" style="font-size:20px;font-weight:700;letter-spacing:-.3px;color:var(--text);">Aced</span>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px;flex:1;">
+      <a class="nav-item" href="Dashboard.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
+      <a class="nav-item" href="Planner.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Planner</a>
+      <a class="nav-item active" href="Goals.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Goals</a>
+      <a class="nav-item" href="Timer.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Timer</a>
+      <div style="position:relative;"><a class="nav-item" href="#" style="color:var(--t4);pointer-events:none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Analytics</a><div style="position:absolute;right:9px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:3px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.22);border-radius:6px;padding:2px 7px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span style="font-size:10px;font-weight:700;color:var(--violet);">Pro</span></div></div>
+    </nav>
+    <div style="border-top:1px solid var(--bd);padding-top:14px;display:flex;align-items:center;gap:9px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#2DD4BF);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">J</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;color:var(--text);">Jawad</div><div style="font-size:10px;color:var(--t3);margin-top:1px;display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:#2DD4BF;display:inline-block;"></span>Free plan</div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main style="flex:1;overflow-y:auto;padding:26px 30px;display:flex;flex-direction:column;gap:28px;min-width:0;position:relative;z-index:1;">
+
+    <!-- ═══ GOALS SECTION ═══ -->
+    <section>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;">
+        <div>
+          <h2 class="clash" style="font-size:22px;font-weight:600;color:var(--text);">Your Goals</h2>
+          <p style="font-size:13px;color:var(--t3);margin-top:3px;">3 active · 1 completed this month</p>
+        </div>
+        <button class="btn-add-goal">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Add Goal
+        </button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+
+        <!-- Card 1: Mathematics — teal tint (>14 days) -->
+        <div class="goal-card">
+          <div class="goal-card-top" style="background:#6C63FF;"></div>
+          <div class="goal-card-body" style="background:rgba(45,212,191,.03);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+              <h3 class="clash" style="font-size:15px;font-weight:600;color:var(--text);line-height:1.3;flex:1;padding-right:8px;">Get a B in Mathematics</h3>
+              <div class="dot-menu">
+                <button class="dot-menu-btn" onclick="toggleMenu(this)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
+                <div class="dot-menu-pop">
+                  <div class="dot-menu-opt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit goal</div>
+                  <div class="dot-menu-opt" style="color:rgba(239,68,68,.7);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Delete</div>
+                  <div class="dot-menu-opt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Mark complete</div>
+                </div>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:2px;">Mathematics · Finals 23 Jun</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div class="prog-track" style="flex:1;margin-right:10px;margin-top:10px;margin-bottom:10px;">
+                <div class="prog-fill" style="width:65%;background:linear-gradient(90deg,#6C63FF,#8B84FF);"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:var(--violet);flex-shrink:0;">65%</span>
+            </div>
+            <div style="display:flex;flex-direction:column;">
+              <div class="subtask done"><div class="subtask-box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span>Complete integration exercises</span></div>
+              <div class="subtask progress"><div class="subtask-box"><div style="width:6px;height:6px;border-radius:50%;background:var(--violet);"></div></div><span>Study differentiation methods</span></div>
+              <div class="subtask todo"><div class="subtask-box"></div><span>Practice exam questions</span></div>
+            </div>
+            <button class="btn-ai btn-ai-locked">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>
+              AI generate sub-tasks
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: Chemistry — red tint (<7 days), urgency border -->
+        <div class="goal-card" style="border-color:rgba(239,68,68,.25);">
+          <div class="goal-card-top" style="background:#EF4444;"></div>
+          <div class="goal-card-body" style="background:rgba(239,68,68,.03);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+              <div style="flex:1;padding-right:8px;">
+                <h3 class="clash" style="font-size:15px;font-weight:600;color:var(--text);line-height:1.3;">Finish Chemistry coursework</h3>
+                <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:2px 7px;margin-top:4px;">
+                  <div style="width:5px;height:5px;border-radius:50%;background:#EF4444;"></div>
+                  <span style="font-size:10px;font-weight:700;color:#EF4444;">Due in 3 days!</span>
+                </div>
+              </div>
+              <div class="dot-menu">
+                <button class="dot-menu-btn" onclick="toggleMenu(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+                <div class="dot-menu-pop"><div class="dot-menu-opt">Edit goal</div><div class="dot-menu-opt" style="color:rgba(239,68,68,.7);">Delete</div><div class="dot-menu-opt">Mark complete</div></div>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:2px;">Chemistry · Due 8 May</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div class="prog-track" style="flex:1;margin-right:10px;margin-top:10px;margin-bottom:10px;">
+                <div class="prog-fill" style="width:40%;background:linear-gradient(90deg,#EF4444,#F87171);"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:#EF4444;flex-shrink:0;">40%</span>
+            </div>
+            <div style="display:flex;flex-direction:column;">
+              <div class="subtask done"><div class="subtask-box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span>Write organic mechanisms</span></div>
+              <div class="subtask todo"><div class="subtask-box"></div><span>Study reaction types</span></div>
+              <div class="subtask todo"><div class="subtask-box"></div><span>Proofread and submit</span></div>
+            </div>
+            <button class="btn-ai btn-ai-locked">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>
+              AI generate sub-tasks
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 3: Physics — amber tint (~7 days) -->
+        <div class="goal-card" style="border-color:rgba(245,158,11,.2);">
+          <div class="goal-card-top" style="background:#F59E0B;"></div>
+          <div class="goal-card-body" style="background:rgba(245,158,11,.03);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+              <h3 class="clash" style="font-size:15px;font-weight:600;color:var(--text);line-height:1.3;flex:1;padding-right:8px;">Read 2 Physics chapters</h3>
+              <div class="dot-menu">
+                <button class="dot-menu-btn" onclick="toggleMenu(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+                <div class="dot-menu-pop"><div class="dot-menu-opt">Edit goal</div><div class="dot-menu-opt" style="color:rgba(239,68,68,.7);">Delete</div><div class="dot-menu-opt">Mark complete</div></div>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:2px;">Physics · Due 15 May</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div class="prog-track" style="flex:1;margin-right:10px;margin-top:10px;margin-bottom:10px;">
+                <div class="prog-fill" style="width:80%;background:linear-gradient(90deg,#F59E0B,#FBBF24);"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:#D97706;flex-shrink:0;">80%</span>
+            </div>
+            <div style="display:flex;flex-direction:column;">
+              <div class="subtask done"><div class="subtask-box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span>Chapter 7: Waves &amp; Optics</span></div>
+              <div class="subtask done"><div class="subtask-box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span>Chapter 8: Electromagnetism</span></div>
+              <div class="subtask todo"><div class="subtask-box"></div><span>Complete chapter summary notes</span></div>
+            </div>
+            <button class="btn-ai btn-ai-locked">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>
+              AI generate sub-tasks
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ HABITS SECTION ═══ -->
+    <section>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;">
+        <h2 class="clash" style="font-size:22px;font-weight:600;color:var(--text);">Daily Habits</h2>
+        <button class="btn-add-goal"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add Habit</button>
+      </div>
+
+      <!-- Habit rows -->
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:var(--sh-sm);margin-bottom:20px;">
+
+        <!-- Day headers -->
+        <div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--bd);background:var(--bg3);">
+          <div style="flex:1;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Habit</div>
+          <div style="display:flex;gap:12px;margin-right:16px;">
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--t3);">M</div>
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--t3);">T</div>
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--violet);">W</div>
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--t3);">T</div>
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--t3);">F</div>
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--t3);">S</div>
+            <div style="width:22px;text-align:center;font-size:10px;font-weight:700;color:var(--t3);">S</div>
+          </div>
+          <div style="width:48px;text-align:right;font-size:10px;font-weight:700;color:var(--t3);">Week</div>
+        </div>
+
+        <!-- Row 1: Read lecture notes — 4/7 -->
+        <div class="habit-row" style="border-bottom:1px solid rgba(108,99,255,.06);">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <div style="width:30px;height:30px;border-radius:8px;background:rgba(108,99,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:var(--text);">Read lecture notes</span>
+          </div>
+          <div style="display:flex;gap:12px;margin-right:16px;">
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check future"></div>
+            <div class="habit-check future"></div>
+            <div class="habit-check future"></div>
+          </div>
+          <span style="width:48px;text-align:right;font-size:12px;font-weight:600;color:var(--violet);">4/7</span>
+        </div>
+
+        <!-- Row 2: Flashcards — 4/7 -->
+        <div class="habit-row" style="border-bottom:1px solid rgba(108,99,255,.06);">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <div style="width:30px;height:30px;border-radius:8px;background:rgba(45,212,191,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M12 12h.01M8 12h.01M16 12h.01"/></svg>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:var(--text);">Do flashcards</span>
+          </div>
+          <div style="display:flex;gap:12px;margin-right:16px;">
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check missed"></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check future"></div>
+            <div class="habit-check future"></div>
+          </div>
+          <span style="width:48px;text-align:right;font-size:12px;font-weight:600;color:var(--teal);">4/7</span>
+        </div>
+
+        <!-- Row 3: Pomodoro — 5/7 -->
+        <div class="habit-row">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <div style="width:30px;height:30px;border-radius:8px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:var(--text);">Pomodoro session</span>
+          </div>
+          <div style="display:flex;gap:12px;margin-right:16px;">
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="habit-check future"></div>
+            <div class="habit-check future"></div>
+          </div>
+          <span style="width:48px;text-align:right;font-size:12px;font-weight:600;color:#D97706;">5/7</span>
+        </div>
+
+      </div>
+
+      <!-- HEATMAP -->
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:20px 22px;box-shadow:var(--sh-sm);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h3 class="clash" style="font-size:14px;font-weight:600;color:var(--text);">Study Heatmap · 12 weeks</h3>
+          <span style="font-size:12px;font-weight:600;color:#D97706;display:flex;align-items:center;gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
+            Longest streak: 14 days
+          </span>
+        </div>
+
+        <!-- Month labels -->
+        <div id="month-labels" style="display:flex;margin-bottom:4px;padding-left:28px;"></div>
+
+        <!-- Day labels + grid -->
+        <div style="display:flex;gap:6px;">
+          <!-- Day labels -->
+          <div style="display:flex;flex-direction:column;gap:3px;justify-content:space-between;padding:1px 0;width:22px;flex-shrink:0;">
+            <span style="font-size:9px;color:var(--t4);height:14px;display:flex;align-items:center;">Mon</span>
+            <span style="font-size:9px;color:transparent;height:14px;display:flex;align-items:center;">Tue</span>
+            <span style="font-size:9px;color:var(--t4);height:14px;display:flex;align-items:center;">Wed</span>
+            <span style="font-size:9px;color:transparent;height:14px;display:flex;align-items:center;">Thu</span>
+            <span style="font-size:9px;color:var(--t4);height:14px;display:flex;align-items:center;">Fri</span>
+            <span style="font-size:9px;color:transparent;height:14px;display:flex;align-items:center;">Sat</span>
+            <span style="font-size:9px;color:transparent;height:14px;display:flex;align-items:center;">Sun</span>
+          </div>
+          <!-- Grid -->
+          <div id="heatmap" style="display:flex;gap:3px;flex:1;"></div>
+        </div>
+
+        <!-- Legend -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end;">
+          <span style="font-size:10px;color:var(--t4);">Less</span>
+          <div style="width:11px;height:11px;border-radius:2px;background:rgba(108,99,255,.06);border:1px solid var(--bd);"></div>
+          <div style="width:11px;height:11px;border-radius:2px;background:rgba(108,99,255,.22);"></div>
+          <div style="width:11px;height:11px;border-radius:2px;background:rgba(108,99,255,.5);"></div>
+          <div style="width:11px;height:11px;border-radius:2px;background:#6C63FF;"></div>
+          <span style="font-size:10px;color:var(--t4);">More</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// Toggle dot menus
+function toggleMenu(btn){
+  const pop=btn.nextElementSibling;
+  const open=pop.classList.contains('open');
+  document.querySelectorAll('.dot-menu-pop').forEach(p=>p.classList.remove('open'));
+  if(!open)pop.classList.add('open');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.dot-menu'))document.querySelectorAll('.dot-menu-pop').forEach(p=>p.classList.remove('open'));
+});
+
+// Heatmap
+(function(){
+  const grid=document.getElementById('heatmap');
+  const monthEl=document.getElementById('month-labels');
+  const months=['Feb','Mar','Apr','May'];
+  const monthStarts=[0,4,8,11]; // which week each month starts
+
+  // 12 weeks × 7 days of intensity data
+  const data=[
+    [0,1,2,3,1,0,2],[2,3,3,2,1,1,0],[1,2,3,3,2,1,1],
+    [0,0,1,2,3,2,1],[1,2,3,3,3,2,0],[2,3,3,2,1,0,1],
+    [1,1,2,3,2,1,0],[0,1,2,3,3,3,2],[2,3,2,1,2,3,1],
+    [3,3,2,1,0,1,2],[1,2,3,3,2,1,0],[2,3,3,2,1,0,0]
+  ];
+  const pal=['rgba(108,99,255,.06)','rgba(108,99,255,.22)','rgba(108,99,255,.5)','#6C63FF'];
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dateBase=new Date('2025-02-17');
+
+  // Month labels
+  monthStarts.forEach((w,i)=>{
+    const span=document.createElement('span');
+    span.style.cssText='font-size:9px;color:var(--t3);font-weight:600;flex:'+((i<3?monthStarts[i+1]-w:12-w))+';min-width:0;';
+    span.textContent=months[i];
+    monthEl.appendChild(span);
+  });
+
+  data.forEach((wk,wi)=>{
+    const col=document.createElement('div');
+    col.style.cssText='display:flex;flex-direction:column;gap:3px;flex:1;';
+    wk.forEach((v,di)=>{
+      const sq=document.createElement('div');
+      sq.className='heat-cell';
+      sq.style.height='14px';
+      sq.style.background=pal[v];
+      if(v===0)sq.style.border='1px solid rgba(108,99,255,.08)';
+      const d=new Date(dateBase);d.setDate(d.getDate()+wi*7+di);
+      const ds=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+      const labels=['No habits','1 habit completed','2 habits completed','All 3 habits'];
+      sq.title=ds+' — '+labels[v];
+      col.appendChild(sq);
+    });
+    grid.appendChild(col);
+  });
+})();
+</script>
+</body>
+</html>

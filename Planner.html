@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Aced — Planner</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{
+  --bg:#FAFAFE;--bg2:#FFFFFF;--bg3:#F0EEFF;
+  --violet:#6C63FF;--violet-d:#4F46E5;--violet-l:#8B84FF;
+  --teal:#2DD4BF;--amber:#F59E0B;--red:#EF4444;
+  --text:#1C1640;--t2:#5C5790;--t3:#9B97C4;--t4:#CCC9E8;
+  --bd:rgba(108,99,255,.14);--bd-s:rgba(108,99,255,.35);
+  --sh-sm:0 1px 8px rgba(91,80,214,.08);--sh:0 4px 20px rgba(91,80,214,.11);
+  --row:56px; /* grid row height */
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satoshi',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:0;height:0}
+.clash{font-family:'Clash Display',system-ui,sans-serif}
+
+.blob{position:fixed;pointer-events:none;filter:blur(80px);border-radius:50%;z-index:0}
+.blob1{width:50vw;height:55vh;top:-12%;right:-8%;background:radial-gradient(ellipse,rgba(139,132,255,.15),transparent 70%);animation:drift1 18s ease-in-out infinite}
+.blob2{width:42vw;height:48vh;bottom:-12%;left:-6%;background:radial-gradient(ellipse,rgba(108,99,255,.09),transparent 70%);animation:drift2 22s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}33%{transform:translate(-20px,16px)}66%{transform:translate(14px,-10px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-20px)}}
+.dot-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(108,99,255,.06) 1px,transparent 1px);background-size:28px 28px}
+
+#devbar{position:relative;z-index:10;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 16px;background:rgba(255,255,255,.9);border-bottom:1px solid var(--bd);backdrop-filter:blur(12px)}
+.devbar-grp{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:3px}
+.dev-btn{display:flex;align-items:center;padding:5px 12px;border-radius:6px;border:none;background:transparent;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .16s}
+.dev-btn:hover{color:var(--text);background:rgba(108,99,255,.07)}
+.dev-btn.active{background:rgba(108,99,255,.12);color:var(--violet);border:1px solid rgba(108,99,255,.22)}
+
+#app{position:relative;z-index:1;display:flex;height:calc(100vh - 42px)}
+
+#sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);box-shadow:var(--sh-sm);display:flex;flex-direction:column;padding:22px 14px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:14px;font-weight:500;color:var(--t2);text-decoration:none;cursor:pointer;transition:background .16s,color .16s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.08);color:var(--violet);font-weight:600}
+
+/* topbar */
+#topbar{display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0}
+
+/* grid */
+#grid-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#cal-area{display:flex;flex:1;min-height:0}
+
+/* right panel */
+#right-panel{width:272px;flex-shrink:0;border-left:1px solid var(--bd);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden;transition:width .28s ease}
+#right-panel.collapsed{width:0}
+
+/* scroll area */
+#cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-width:0}
+
+/* header row */
+#col-headers{display:flex;border-bottom:1px solid var(--bd);background:var(--bg2);flex-shrink:0}
+
+/* time label col */
+.time-col{width:52px;flex-shrink:0}
+
+/* day columns */
+.day-cols{display:flex;flex:1;min-width:0;position:relative}
+.day-col{flex:1;border-right:1px solid rgba(108,99,255,.07);position:relative;height:calc(var(--row) * 14)}
+.day-col:last-child{border-right:none}
+.day-col.today-col{background:rgba(108,99,255,.03)}
+
+/* hour lines */
+.hour-line{position:absolute;left:0;right:0;border-top:1px solid rgba(108,99,255,.06);pointer-events:none}
+.hour-line.half{border-top-style:dashed;opacity:.5}
+
+/* study block */
+.sblock{position:absolute;left:6px;right:6px;border-radius:8px;padding:5px 8px;cursor:grab;transition:box-shadow .2s,transform .2s;overflow:hidden;user-select:none}
+.sblock:hover{box-shadow:0 4px 16px rgba(91,80,214,.2);transform:translateY(-1px) scale(1.01)}
+.sblock:active{cursor:grabbing}
+.sblock .ai-badge{position:absolute;top:4px;right:5px;display:flex;align-items:center;gap:2px;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.22);border-radius:4px;padding:1px 5px;font-size:9px;font-weight:700;color:var(--violet)}
+.drag-handle{position:absolute;left:0;top:0;bottom:0;width:12px;display:flex;align-items:center;justify-content:center;cursor:grab;opacity:.4}
+.drag-handle:hover{opacity:.8}
+
+/* empty slot hover */
+.slot-ghost{position:absolute;left:6px;right:6px;border-radius:6px;border:1.5px dashed rgba(108,99,255,.2);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;cursor:pointer;pointer-events:none;font-size:13px;color:rgba(108,99,255,.4);font-weight:600}
+.hour-slot:hover .slot-ghost{opacity:1;pointer-events:auto}
+.hour-slot{position:relative;height:var(--row)}
+
+/* current time */
+#time-line{position:absolute;left:0;right:0;z-index:5;pointer-events:none;display:flex;align-items:center}
+#time-line::after{content:'';flex:1;height:1.5px;background:var(--violet);opacity:.7}
+#time-dot{width:8px;height:8px;border-radius:50%;background:var(--violet);flex-shrink:0;box-shadow:0 0 8px rgba(108,99,255,.5)}
+
+/* view toggle */
+.view-pill{display:flex;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:2px}
+.view-opt{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--t2);transition:all .16s;border:none;background:transparent;font-family:'Satoshi',sans-serif}
+.view-opt.active{background:var(--violet);color:#fff;box-shadow:0 2px 8px rgba(108,99,255,.3)}
+
+/* btns */
+.btn-ghost{background:transparent;border:1.5px solid var(--bd);border-radius:9px;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;padding:7px 14px;cursor:pointer;transition:all .16s;display:flex;align-items:center;gap:6px}
+.btn-ghost:hover{border-color:var(--bd-s);color:var(--text);background:var(--bg3)}
+.btn-regen{background:rgba(108,99,255,.08);border:1.5px solid rgba(108,99,255,.2);border-radius:9px;color:var(--violet);font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;padding:7px 14px;cursor:pointer;transition:all .16s;display:flex;align-items:center;gap:6px}
+.btn-regen:hover{background:rgba(108,99,255,.14);border-color:var(--bd-s)}
+.btn-add{background:var(--violet);border:none;border-radius:9px;color:#fff;font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;padding:7px 14px;cursor:pointer;transition:all .16s;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(108,99,255,.3)}
+.btn-add:hover{background:var(--violet-d);box-shadow:0 4px 16px rgba(108,99,255,.4)}
+
+/* right panel internals */
+.rp-section{padding:18px 16px;border-bottom:1px solid var(--bd)}
+.sparkline{display:flex;align-items:flex-end;gap:1.5px;height:20px}
+.spark-bar{width:3px;border-radius:2px;background:currentColor;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="dot-grid"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<!-- devbar -->
+<div id="devbar">
+  <div class="devbar-grp">
+    <a class="dev-btn" href="Dashboard.html">Dashboard</a>
+    <a class="dev-btn active" href="Planner.html">Planner</a>
+    <a class="dev-btn" href="Goals.html">Goals &amp; Habits</a>
+    <a class="dev-btn" href="Timer.html">Focus Timer</a>
+  </div>
+  <span style="width:1px;height:18px;background:var(--bd);margin:0 8px;"></span>
+  <span style="font-size:11px;color:var(--t3);font-weight:500;">Aced · Web App</span>
+</div>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px;margin-bottom:32px;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6C63FF,#8B84FF);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(108,99,255,.35);flex-shrink:0;">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M9 1.5L2 16.5h3.8l1.6-3.8h3.2l1.6 3.8H16ZM9 6l1.2 3.6H7.8Z" fill="white"/></svg>
+      </div>
+      <span class="clash" style="font-size:20px;font-weight:700;letter-spacing:-.3px;color:var(--text);">Aced</span>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px;flex:1;">
+      <a class="nav-item" href="Dashboard.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
+      <a class="nav-item active" href="Planner.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Planner</a>
+      <a class="nav-item" href="Goals.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Goals</a>
+      <a class="nav-item" href="Timer.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Timer</a>
+      <div style="position:relative;"><a class="nav-item" href="#" style="color:var(--t4);pointer-events:none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Analytics</a><div style="position:absolute;right:9px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:3px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.22);border-radius:6px;padding:2px 7px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span style="font-size:10px;font-weight:700;color:var(--violet);">Pro</span></div></div>
+    </nav>
+    <div style="border-top:1px solid var(--bd);padding-top:14px;display:flex;align-items:center;gap:9px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#2DD4BF);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">J</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;color:var(--text);">Jawad</div><div style="font-size:10px;color:var(--t3);margin-top:1px;display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:#2DD4BF;display:inline-block;"></span>Free plan</div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN PLANNER AREA -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative;z-index:1;">
+
+    <!-- TOP BAR -->
+    <div id="topbar">
+      <!-- Week nav -->
+      <button class="btn-ghost" onclick="document.getElementById('week-label').textContent='Week of 5–11 May 2025'" style="padding:7px 10px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span id="week-label" class="clash" style="font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;">Week of 12–18 May 2025</span>
+      <button class="btn-ghost" onclick="document.getElementById('week-label').textContent='Week of 19–25 May 2025'" style="padding:7px 10px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <!-- View toggle -->
+      <div class="view-pill" style="margin-left:6px;">
+        <button class="view-opt active" id="v-week">Week</button>
+        <button class="view-opt" id="v-day">Day</button>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <!-- Regen (Pro-locked) -->
+      <button class="btn-regen" id="regen-btn" style="position:relative;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>
+        Regenerate plan
+        <div style="display:flex;align-items:center;gap:2px;background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.3);border-radius:4px;padding:1px 5px;margin-left:2px;">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span style="font-size:9px;font-weight:700;color:var(--violet);">Pro</span>
+        </div>
+      </button>
+
+      <!-- Add session -->
+      <button class="btn-add">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add session
+      </button>
+
+      <!-- Collapse panel -->
+      <button id="toggle-panel" class="btn-ghost" style="padding:7px 10px;margin-left:4px;" title="Toggle panel">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6M15 6v12"/></svg>
+      </button>
+    </div>
+
+    <!-- CALENDAR + RIGHT PANEL -->
+    <div id="cal-area">
+
+      <!-- CALENDAR GRID -->
+      <div id="grid-wrap">
+
+        <!-- Column headers -->
+        <div id="col-headers">
+          <div class="time-col" style="height:52px;"></div>
+          <div style="flex:1;display:flex;">
+            <!-- Mon–Sun headers, today = Wed (index 2) -->
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;border-right:1px solid rgba(108,99,255,.07);"><span style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Mon</span><span style="font-size:16px;font-weight:600;color:var(--t2);margin-top:1px;">12</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;border-right:1px solid rgba(108,99,255,.07);"><span style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Tue</span><span style="font-size:16px;font-weight:600;color:var(--t2);margin-top:1px;">13</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;border-right:1px solid rgba(108,99,255,.07);background:rgba(108,99,255,.04);"><span style="font-size:11px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.5px;">Wed</span><div style="width:28px;height:28px;border-radius:50%;background:var(--violet);display:flex;align-items:center;justify-content:center;margin-top:1px;"><span style="font-size:14px;font-weight:700;color:#fff;">14</span></div></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;border-right:1px solid rgba(108,99,255,.07);"><span style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Thu</span><span style="font-size:16px;font-weight:600;color:var(--t2);margin-top:1px;">15</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;border-right:1px solid rgba(108,99,255,.07);"><span style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Fri</span><span style="font-size:16px;font-weight:600;color:var(--t2);margin-top:1px;">16</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;border-right:1px solid rgba(108,99,255,.07);"><span style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Sat</span><span style="font-size:16px;font-weight:600;color:var(--t2);margin-top:1px;">17</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:52px;"><span style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;">Sun</span><span style="font-size:16px;font-weight:600;color:var(--t2);margin-top:1px;">18</span></div>
+          </div>
+        </div>
+
+        <!-- Scrollable grid body -->
+        <div id="cal-scroll">
+          <div style="display:flex;">
+
+            <!-- Time labels -->
+            <div class="time-col" style="flex-shrink:0;">
+              <!-- 08:00 to 21:00 = 14 labels -->
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">08:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">09:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">10:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">11:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">12:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">13:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">14:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">15:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">16:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">17:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">18:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">19:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">20:00</span></div>
+              <div style="height:var(--row);display:flex;align-items:flex-start;padding-top:4px;justify-content:flex-end;padding-right:8px;"><span style="font-size:10px;color:var(--t4);font-weight:500;">21:00</span></div>
+            </div>
+
+            <!-- Day columns -->
+            <div class="day-cols" id="day-cols-wrap">
+
+              <!-- Current time indicator: Wed 11:47 → top = 3*56 + 47/60*56 = 168+43.9=212px -->
+              <div id="time-line" style="top:212px;left:0;right:0;position:absolute;z-index:5;pointer-events:none;display:flex;align-items:center;">
+                <div id="time-dot" style="width:8px;height:8px;border-radius:50%;background:var(--violet);flex-shrink:0;box-shadow:0 0 8px rgba(108,99,255,.5);margin-left:0;"></div>
+                <div style="flex:1;height:1.5px;background:linear-gradient(90deg,var(--violet),rgba(108,99,255,.3));"></div>
+              </div>
+
+              <!-- MON col — Math 09:00-10:30 top=56 h=84 -->
+              <div class="day-col" id="col-0">
+                <div id="block-mon-math" class="sblock" style="top:56px;height:84px;background:rgba(108,99,255,.08);border-left:3px solid #6C63FF;">
+                  <div class="drag-handle">
+                    <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><circle cx="2" cy="2" r="1.2" fill="var(--violet)"/><circle cx="6" cy="2" r="1.2" fill="var(--violet)"/><circle cx="2" cy="7" r="1.2" fill="var(--violet)"/><circle cx="6" cy="7" r="1.2" fill="var(--violet)"/><circle cx="2" cy="12" r="1.2" fill="var(--violet)"/><circle cx="6" cy="12" r="1.2" fill="var(--violet)"/></svg>
+                  </div>
+                  <div class="ai-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>AI</div>
+                  <div style="padding-left:10px;">
+                    <div style="font-size:12px;font-weight:600;color:var(--violet);line-height:1.3;">Mathematics</div>
+                    <div style="font-size:10px;color:var(--t2);margin-top:1px;line-height:1.3;">Integration by parts</div>
+                    <div style="font-size:10px;color:var(--t3);margin-top:2px;">09:00 – 10:30</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TUE col — Chem 14:00-15:30 top=336 h=84 -->
+              <div class="day-col" id="col-1">
+                <div id="block-tue-chem" class="sblock" style="top:336px;height:84px;background:rgba(45,212,191,.08);border-left:3px solid #2DD4BF;">
+                  <div class="drag-handle"><svg width="8" height="14" viewBox="0 0 8 14" fill="none"><circle cx="2" cy="2" r="1.2" fill="#2DD4BF"/><circle cx="6" cy="2" r="1.2" fill="#2DD4BF"/><circle cx="2" cy="7" r="1.2" fill="#2DD4BF"/><circle cx="6" cy="7" r="1.2" fill="#2DD4BF"/><circle cx="2" cy="12" r="1.2" fill="#2DD4BF"/><circle cx="6" cy="12" r="1.2" fill="#2DD4BF"/></svg></div>
+                  <div class="ai-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>AI</div>
+                  <div style="padding-left:10px;"><div style="font-size:12px;font-weight:600;color:#0D9488;line-height:1.3;">Chemistry</div><div style="font-size:10px;color:var(--t2);margin-top:1px;">Organic Chemistry</div><div style="font-size:10px;color:var(--t3);margin-top:2px;">14:00 – 15:30</div></div>
+                </div>
+              </div>
+
+              <!-- WED col (today) — Physics 10:00-11:00 top=112 h=56 -->
+              <div class="day-col today-col" id="col-2">
+                <div class="sblock" style="top:112px;height:56px;background:rgba(245,158,11,.08);border-left:3px solid #F59E0B;">
+                  <div class="drag-handle"><svg width="8" height="14" viewBox="0 0 8 14" fill="none"><circle cx="2" cy="2" r="1.2" fill="#F59E0B"/><circle cx="6" cy="2" r="1.2" fill="#F59E0B"/><circle cx="2" cy="7" r="1.2" fill="#F59E0B"/><circle cx="6" cy="7" r="1.2" fill="#F59E0B"/><circle cx="2" cy="12" r="1.2" fill="#F59E0B"/><circle cx="6" cy="12" r="1.2" fill="#F59E0B"/></svg></div>
+                  <div class="ai-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>AI</div>
+                  <div style="padding-left:10px;"><div style="font-size:12px;font-weight:600;color:#B45309;line-height:1.3;">Physics</div><div style="font-size:10px;color:var(--t2);margin-top:1px;">Waves</div></div>
+                </div>
+              </div>
+
+              <!-- THU col — Math 19:00-21:00 top=616 h=112 -->
+              <div class="day-col" id="col-3">
+                <div class="sblock" style="top:616px;height:112px;background:rgba(108,99,255,.08);border-left:3px solid #6C63FF;">
+                  <div class="drag-handle"><svg width="8" height="14" viewBox="0 0 8 14" fill="none"><circle cx="2" cy="2" r="1.2" fill="var(--violet)"/><circle cx="6" cy="2" r="1.2" fill="var(--violet)"/><circle cx="2" cy="7" r="1.2" fill="var(--violet)"/><circle cx="6" cy="7" r="1.2" fill="var(--violet)"/><circle cx="2" cy="12" r="1.2" fill="var(--violet)"/><circle cx="6" cy="12" r="1.2" fill="var(--violet)"/></svg></div>
+                  <div class="ai-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>AI</div>
+                  <div style="padding-left:10px;"><div style="font-size:12px;font-weight:600;color:var(--violet);line-height:1.3;">Mathematics</div><div style="font-size:10px;color:var(--t2);margin-top:1px;">Past papers</div><div style="font-size:10px;color:var(--t3);margin-top:2px;">19:00 – 21:00</div></div>
+                </div>
+              </div>
+
+              <!-- FRI col — Chem 09:00-10:00 top=56 h=56 -->
+              <div class="day-col" id="col-4">
+                <div class="sblock" style="top:56px;height:56px;background:rgba(45,212,191,.08);border-left:3px solid #2DD4BF;">
+                  <div class="drag-handle"><svg width="8" height="14" viewBox="0 0 8 14" fill="none"><circle cx="2" cy="2" r="1.2" fill="#2DD4BF"/><circle cx="6" cy="2" r="1.2" fill="#2DD4BF"/><circle cx="2" cy="7" r="1.2" fill="#2DD4BF"/><circle cx="6" cy="7" r="1.2" fill="#2DD4BF"/><circle cx="2" cy="12" r="1.2" fill="#2DD4BF"/><circle cx="6" cy="12" r="1.2" fill="#2DD4BF"/></svg></div>
+                  <div class="ai-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>AI</div>
+                  <div style="padding-left:10px;"><div style="font-size:12px;font-weight:600;color:#0D9488;">Chemistry</div><div style="font-size:10px;color:var(--t2);margin-top:1px;">Revision</div></div>
+                </div>
+              </div>
+
+              <!-- SAT col — Physics 11:00-12:00 top=168 h=56 -->
+              <div class="day-col" id="col-5">
+                <div class="sblock" style="top:168px;height:56px;background:rgba(245,158,11,.08);border-left:3px solid #F59E0B;">
+                  <div class="drag-handle"><svg width="8" height="14" viewBox="0 0 8 14" fill="none"><circle cx="2" cy="2" r="1.2" fill="#F59E0B"/><circle cx="6" cy="2" r="1.2" fill="#F59E0B"/><circle cx="2" cy="7" r="1.2" fill="#F59E0B"/><circle cx="6" cy="7" r="1.2" fill="#F59E0B"/><circle cx="2" cy="12" r="1.2" fill="#F59E0B"/><circle cx="6" cy="12" r="1.2" fill="#F59E0B"/></svg></div>
+                  <div style="padding-left:10px;"><div style="font-size:12px;font-weight:600;color:#B45309;">Physics</div><div style="font-size:10px;color:var(--t2);margin-top:1px;">Problem sets</div></div>
+                </div>
+              </div>
+
+              <!-- SUN col — empty -->
+              <div class="day-col" id="col-6"></div>
+
+            </div><!-- /day-cols -->
+          </div><!-- /flex row -->
+        </div><!-- /cal-scroll -->
+
+      </div><!-- /grid-wrap -->
+
+      <!-- RIGHT PANEL -->
+      <div id="right-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;">
+          <span class="clash" style="font-size:13px;font-weight:600;color:var(--text);">This Week</span>
+        </div>
+        <div class="rp-section" style="padding-top:12px;">
+          <!-- Subject rows -->
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--violet);flex-shrink:0;"></div>
+              <span style="font-size:12px;font-weight:500;color:var(--t2);flex:1;">Mathematics</span>
+              <div class="sparkline" style="color:var(--violet);">
+                <div class="spark-bar" style="height:8px;"></div><div class="spark-bar" style="height:12px;"></div><div class="spark-bar" style="height:16px;"></div><div class="spark-bar" style="height:11px;"></div><div class="spark-bar" style="height:18px;"></div><div class="spark-bar" style="height:14px;"></div><div class="spark-bar" style="height:20px;"></div>
+              </div>
+              <span style="font-size:11px;color:var(--violet);font-weight:600;min-width:28px;text-align:right;">3.5h</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;"></div>
+              <span style="font-size:12px;font-weight:500;color:var(--t2);flex:1;">Chemistry</span>
+              <div class="sparkline" style="color:var(--teal);">
+                <div class="spark-bar" style="height:14px;"></div><div class="spark-bar" style="height:10px;"></div><div class="spark-bar" style="height:16px;"></div><div class="spark-bar" style="height:18px;"></div><div class="spark-bar" style="height:12px;"></div><div class="spark-bar" style="height:20px;"></div><div class="spark-bar" style="height:15px;"></div>
+              </div>
+              <span style="font-size:11px;color:#0D9488;font-weight:600;min-width:28px;text-align:right;">2h</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;"></div>
+              <span style="font-size:12px;font-weight:500;color:var(--t2);flex:1;">Physics</span>
+              <div class="sparkline" style="color:var(--amber);">
+                <div class="spark-bar" style="height:6px;"></div><div class="spark-bar" style="height:10px;"></div><div class="spark-bar" style="height:8px;"></div><div class="spark-bar" style="height:14px;"></div><div class="spark-bar" style="height:12px;"></div><div class="spark-bar" style="height:16px;"></div><div class="spark-bar" style="height:11px;"></div>
+              </div>
+              <span style="font-size:11px;color:#B45309;font-weight:600;min-width:28px;text-align:right;">1.5h</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rp-section">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;" class="clash">Deadlines</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.14);border-radius:9px;">
+              <div><div style="font-size:12px;font-weight:600;color:var(--text);">Chemistry Essay</div><div style="font-size:10px;color:var(--t3);margin-top:1px;">Organic Chemistry Unit 3</div></div>
+              <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:2px 7px;white-space:nowrap;"><span style="font-size:10px;font-weight:700;color:#EF4444;">3d</span></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.14);border-radius:9px;">
+              <div><div style="font-size:12px;font-weight:600;color:var(--text);">Physics Lab</div><div style="font-size:10px;color:var(--t3);margin-top:1px;">Waves &amp; Oscillations</div></div>
+              <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:2px 7px;white-space:nowrap;"><span style="font-size:10px;font-weight:700;color:#F59E0B;">6d</span></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:rgba(45,212,191,.04);border:1px solid rgba(45,212,191,.14);border-radius:9px;">
+              <div><div style="font-size:12px;font-weight:600;color:var(--text);">Maths Final</div><div style="font-size:10px;color:var(--t3);margin-top:1px;">A-Level Paper 2 &amp; 3</div></div>
+              <div style="background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.2);border-radius:6px;padding:2px 7px;white-space:nowrap;"><span style="font-size:10px;font-weight:700;color:#2DD4BF;">12d</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty slot tip -->
+        <div style="padding:16px;margin-top:auto;">
+          <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:12px 13px;font-size:11px;color:var(--t2);line-height:1.5;">
+            <span style="font-weight:600;color:var(--violet);">Tip:</span> Hover any empty time slot to add a session, or drag existing sessions to reschedule.
+          </div>
+        </div>
+      </div><!-- /right-panel -->
+
+    </div><!-- /cal-area -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Add session inline modal (hidden) -->
+<div id="add-modal" style="display:none;position:fixed;z-index:100;background:var(--bg2);border:1.5px solid var(--bd-s);border-radius:14px;padding:16px;box-shadow:0 12px 40px rgba(91,80,214,.18);width:240px;">
+  <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;">Add session</div>
+  <select style="width:100%;height:36px;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--text);font-family:'Satoshi',sans-serif;font-size:12px;padding:0 10px;outline:none;margin-bottom:8px;cursor:pointer;">
+    <option>Mathematics</option><option>Chemistry</option><option>Physics</option>
+  </select>
+  <input type="text" placeholder="Task description" style="width:100%;height:36px;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--text);font-family:'Satoshi',sans-serif;font-size:12px;padding:0 10px;outline:none;margin-bottom:8px;">
+  <div style="display:flex;gap:6px;margin-bottom:12px;">
+    <button style="flex:1;height:28px;border-radius:6px;border:1.5px solid var(--bd);background:var(--bg);color:var(--t2);font-family:'Satoshi',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">30m</button>
+    <button style="flex:1;height:28px;border-radius:6px;border:1.5px solid var(--violet);background:rgba(108,99,255,.08);color:var(--violet);font-family:'Satoshi',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">1h</button>
+    <button style="flex:1;height:28px;border-radius:6px;border:1.5px solid var(--bd);background:var(--bg);color:var(--t2);font-family:'Satoshi',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">1.5h</button>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="document.getElementById('add-modal').style.display='none'" style="flex:1;height:34px;border-radius:8px;border:1.5px solid var(--bd);background:transparent;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
+    <button style="flex:1;height:34px;border-radius:8px;background:var(--violet);border:none;color:#fff;font-family:'Satoshi',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">Add</button>
+  </div>
+</div>
+
+<script>
+// Right panel collapse
+document.getElementById('toggle-panel').addEventListener('click',()=>{
+  document.getElementById('right-panel').classList.toggle('collapsed');
+});
+
+// View toggle
+document.getElementById('v-week').addEventListener('click',function(){
+  this.classList.add('active');document.getElementById('v-day').classList.remove('active');
+});
+document.getElementById('v-day').addEventListener('click',function(){
+  this.classList.add('active');document.getElementById('v-week').classList.remove('active');
+});
+
+// Add session button → show modal near click
+document.querySelector('.btn-add').addEventListener('click',function(e){
+  const m=document.getElementById('add-modal');
+  const r=this.getBoundingClientRect();
+  m.style.top=(r.bottom+8)+'px';
+  m.style.right=(window.innerWidth-r.right)+'px';
+  m.style.left='auto';
+  m.style.display='block';
+});
+document.addEventListener('click',function(e){
+  const m=document.getElementById('add-modal');
+  if(m.style.display==='block'&&!m.contains(e.target)&&!document.querySelector('.btn-add').contains(e.target))m.style.display='none';
+});
+
+// Empty slot hover on day columns (add ghost + buttons)
+document.querySelectorAll('.day-col').forEach(col=>{
+  for(let h=0;h<14;h++){
+    const slot=document.createElement('div');
+    slot.className='hour-slot';
+    const ghost=document.createElement('div');
+    ghost.className='slot-ghost';
+    ghost.innerHTML='+';
+    ghost.style.cssText='height:'+36+'px;top:'+((h*56)+10)+'px;';
+    slot.appendChild(ghost);
+    col.appendChild(slot);
+    slot.style.top=(h*56)+'px';
+    slot.style.position='absolute';
+    slot.style.width='100%';
+    ghost.addEventListener('click',()=>{
+      const m=document.getElementById('add-modal');
+      const r=ghost.getBoundingClientRect();
+      m.style.top=(r.bottom+8)+'px';
+      m.style.left=r.left+'px';
+      m.style.right='auto';
+      m.style.display='block';
+    });
+  }
+});
+</script>
+</body>
+</html>

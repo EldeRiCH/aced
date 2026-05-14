@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Aced — Focus Timer</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{
+  --bg:#FAFAFE;--bg2:#FFFFFF;--bg3:#F0EEFF;
+  --violet:#6C63FF;--violet-d:#4F46E5;--violet-l:#8B84FF;
+  --teal:#2DD4BF;--amber:#F59E0B;--red:#EF4444;
+  --text:#1C1640;--t2:#5C5790;--t3:#9B97C4;--t4:#CCC9E8;
+  --bd:rgba(108,99,255,.14);--bd-s:rgba(108,99,255,.35);
+  --sh-sm:0 1px 8px rgba(91,80,214,.08);--sh:0 4px 20px rgba(91,80,214,.11);
+  --circ:753.98; /* 2π × 120 */
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satoshi',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:0;height:0}
+.clash{font-family:'Clash Display',system-ui,sans-serif}
+
+/* blobs */
+.blob{position:fixed;pointer-events:none;filter:blur(80px);border-radius:50%;z-index:0}
+.blob1{width:50vw;height:55vh;top:-12%;right:-8%;background:radial-gradient(ellipse,rgba(139,132,255,.15),transparent 70%);animation:drift1 18s ease-in-out infinite}
+.blob2{width:42vw;height:48vh;bottom:-12%;left:-6%;background:radial-gradient(ellipse,rgba(108,99,255,.09),transparent 70%);animation:drift2 22s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}33%{transform:translate(-20px,16px)}66%{transform:translate(14px,-10px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-20px)}}
+.dot-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(108,99,255,.06) 1px,transparent 1px);background-size:28px 28px}
+
+/* breathing blobs for active state */
+.blob-active{position:fixed;pointer-events:none;filter:blur(100px);border-radius:50%;z-index:0;opacity:0;transition:opacity .6s}
+.blob-active.show{opacity:1}
+.breath1{width:60vw;height:65vh;top:-15%;right:-10%;background:radial-gradient(ellipse,rgba(108,99,255,.18),transparent 70%);animation:breathe1 4s ease-in-out infinite}
+.breath2{width:50vw;height:55vh;bottom:-15%;left:-8%;background:radial-gradient(ellipse,rgba(139,132,255,.13),transparent 70%);animation:breathe2 4s ease-in-out infinite}
+@keyframes breathe1{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.1);opacity:1}}
+@keyframes breathe2{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:.9}}
+
+#devbar{position:relative;z-index:10;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 16px;background:rgba(255,255,255,.9);border-bottom:1px solid var(--bd);backdrop-filter:blur(12px)}
+.devbar-grp{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:3px}
+.dev-btn{display:flex;align-items:center;padding:5px 12px;border-radius:6px;border:none;background:transparent;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .16s}
+.dev-btn:hover{color:var(--text);background:rgba(108,99,255,.07)}
+.dev-btn.active{background:rgba(108,99,255,.12);color:var(--violet);border:1px solid rgba(108,99,255,.22)}
+
+#app{position:relative;z-index:1;display:flex;height:calc(100vh - 42px)}
+#sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);box-shadow:var(--sh-sm);display:flex;flex-direction:column;padding:22px 14px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:14px;font-weight:500;color:var(--t2);text-decoration:none;cursor:pointer;transition:background .16s,color .16s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.08);color:var(--violet);font-weight:600}
+
+/* PRE-SESSION */
+#pre-session{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 32px;gap:0}
+.form-group{width:100%;max-width:440px;margin-bottom:18px}
+.form-label{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.4px}
+.form-input{width:100%;height:44px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg2);color:var(--text);font-family:'Satoshi',sans-serif;font-size:14px;font-weight:500;padding:0 14px;outline:none;transition:border-color .16s,box-shadow .16s;caret-color:var(--violet)}
+.form-input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(108,99,255,.1)}
+.form-input::placeholder{color:var(--t4)}
+select.form-input{cursor:pointer}
+
+/* Duration pills */
+.dur-pills{display:flex;gap:8px;width:100%;max-width:440px;margin-bottom:18px}
+.dur-pill{flex:1;height:44px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg2);color:var(--t2);font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .16s;line-height:1.2}
+.dur-pill .sub{font-size:9px;font-weight:500;color:var(--t4);margin-top:1px}
+.dur-pill:hover{border-color:var(--bd-s);background:var(--bg3);color:var(--text)}
+.dur-pill.active{background:var(--violet);border-color:var(--violet);color:#fff;box-shadow:0 4px 14px rgba(108,99,255,.35)}
+.dur-pill.active .sub{color:rgba(255,255,255,.7)}
+
+/* Ambient sounds */
+.sounds-row{display:flex;gap:8px;width:100%;max-width:440px;margin-bottom:24px}
+.sound-btn{flex:1;height:48px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .16s;font-family:'Satoshi',sans-serif}
+.sound-btn:hover{border-color:var(--bd-s);background:var(--bg3)}
+.sound-btn.active{border-color:var(--violet);background:rgba(108,99,255,.06);box-shadow:0 0 0 2px rgba(108,99,255,.12)}
+.sound-btn .slabel{font-size:10px;font-weight:600;color:var(--t3)}
+.sound-btn.active .slabel{color:var(--violet)}
+
+/* Start button */
+.btn-start-big{width:100%;max-width:440px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--violet-l),var(--violet-d));border:none;color:#fff;font-family:'Clash Display',sans-serif;font-size:17px;font-weight:700;cursor:pointer;letter-spacing:-.2px;transition:transform .14s,box-shadow .2s;box-shadow:0 6px 24px rgba(108,99,255,.35)}
+.btn-start-big:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,99,255,.45)}
+.btn-start-big:active{transform:scale(.97)}
+
+/* ACTIVE SESSION */
+#active-session{display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;gap:0}
+
+/* Timer ring */
+#timer-ring-wrap{position:relative;width:280px;height:280px;margin-bottom:24px}
+#timer-ring-svg{transform:rotate(-90deg);filter:drop-shadow(0 0 20px rgba(108,99,255,.3));transition:filter .5s}
+#timer-ring-svg.pulsing{animation:ringPulse 2s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{filter:drop-shadow(0 0 12px rgba(108,99,255,.3))}50%{filter:drop-shadow(0 0 28px rgba(108,99,255,.65))}}
+.ring-track{fill:none;stroke:rgba(108,99,255,.1);stroke-width:10}
+.ring-fill{fill:none;stroke:url(#ringGrad);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+#ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#timer-display{font-family:'Clash Display',sans-serif;font-size:60px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-2px}
+#round-label{font-size:13px;color:var(--t3);margin-top:6px}
+
+/* Controls */
+.ctrl-row{display:flex;align-items:center;gap:12px;margin-top:4px}
+.btn-pause{display:flex;align-items:center;gap:8px;background:var(--violet);border:none;border-radius:12px;color:#fff;font-family:'Satoshi',sans-serif;font-size:15px;font-weight:700;padding:13px 28px;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(108,99,255,.35)}
+.btn-pause:hover{background:var(--violet-d);transform:translateY(-1px);box-shadow:0 6px 22px rgba(108,99,255,.45)}
+.btn-ctrl{display:flex;align-items:center;gap:6px;background:transparent;border:1.5px solid var(--bd);border-radius:10px;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:13px;font-weight:600;padding:10px 16px;cursor:pointer;transition:all .16s}
+.btn-ctrl:hover{border-color:var(--bd-s);background:var(--bg3);color:var(--text)}
+
+/* XP bar (bottom, persistent in active state) */
+#xp-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);border-top:1px solid var(--bd);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;padding:10px 24px;gap:20px}
+.xp-fill{height:4px;border-radius:4px;background:linear-gradient(90deg,#6C63FF,#8B84FF);transition:width .5s ease}
+
+/* Complete state overlay */
+#complete-overlay{display:none;flex-direction:column;align-items:center;justify-content:center;position:absolute;inset:0;z-index:20;background:rgba(250,250,254,.92);backdrop-filter:blur(8px)}
+#xp-pop{font-family:'Clash Display',sans-serif;font-size:48px;font-weight:700;color:var(--violet);animation:xpFloat 2s ease-out forwards;opacity:0}
+@keyframes xpFloat{0%{opacity:0;transform:translateY(20px) scale(.8)}20%{opacity:1;transform:translateY(-4px) scale(1.05)}70%{opacity:1;transform:translateY(-8px) scale(1)}100%{opacity:1;transform:translateY(-8px) scale(1)}}
+
+/* teal ring flash for complete */
+@keyframes ringFlash{0%{stroke:#2DD4BF;filter:drop-shadow(0 0 20px rgba(45,212,191,.6))}100%{stroke:url(#ringGrad);filter:drop-shadow(0 0 12px rgba(108,99,255,.3))}}
+</style>
+</head>
+<body>
+
+<div class="dot-grid"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob-active breath1" id="breath1"></div>
+<div class="blob-active breath2" id="breath2"></div>
+
+<div id="devbar">
+  <div class="devbar-grp">
+    <a class="dev-btn" href="Dashboard.html">Dashboard</a>
+    <a class="dev-btn" href="Planner.html">Planner</a>
+    <a class="dev-btn" href="Goals.html">Goals &amp; Habits</a>
+    <a class="dev-btn active" href="Timer.html">Focus Timer</a>
+  </div>
+  <span style="width:1px;height:18px;background:var(--bd);margin:0 8px;"></span>
+  <span style="font-size:11px;color:var(--t3);font-weight:500;">Aced · Web App</span>
+</div>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px;margin-bottom:32px;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6C63FF,#8B84FF);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(108,99,255,.35);flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M9 1.5L2 16.5h3.8l1.6-3.8h3.2l1.6 3.8H16ZM9 6l1.2 3.6H7.8Z" fill="white"/></svg></div>
+      <span class="clash" style="font-size:20px;font-weight:700;letter-spacing:-.3px;color:var(--text);">Aced</span>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px;flex:1;">
+      <a class="nav-item" href="Dashboard.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
+      <a class="nav-item" href="Planner.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Planner</a>
+      <a class="nav-item" href="Goals.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Goals</a>
+      <a class="nav-item active" href="Timer.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Timer</a>
+      <div style="position:relative;"><a class="nav-item" href="#" style="color:var(--t4);pointer-events:none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Analytics</a><div style="position:absolute;right:9px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:3px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.22);border-radius:6px;padding:2px 7px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span style="font-size:10px;font-weight:700;color:var(--violet);">Pro</span></div></div>
+    </nav>
+    <div style="border-top:1px solid var(--bd);padding-top:14px;display:flex;align-items:center;gap:9px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#2DD4BF);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">J</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;color:var(--text);">Jawad</div><div style="font-size:10px;color:var(--t3);margin-top:1px;display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:#2DD4BF;display:inline-block;"></span>Free plan</div></div>
+    </div>
+  </aside>
+
+  <!-- TIMER MAIN AREA -->
+  <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;">
+
+    <!-- ══════════ PRE-SESSION ══════════ -->
+    <div id="pre-session">
+
+      <h1 class="clash" style="font-size:36px;font-weight:700;letter-spacing:-.5px;color:var(--text);margin-bottom:8px;width:100%;max-width:440px;">Ready to focus?</h1>
+      <p style="font-size:14px;color:var(--t3);margin-bottom:28px;width:100%;max-width:440px;">Set up your session and let's get to work.</p>
+
+      <!-- Subject -->
+      <div class="form-group">
+        <label class="form-label">What are you studying?</label>
+        <select class="form-input" id="subject-select">
+          <option value="math" style="color:#6C63FF;">Mathematics</option>
+          <option value="chem" style="color:#2DD4BF;">Chemistry</option>
+          <option value="phys" style="color:#F59E0B;">Physics</option>
+        </select>
+      </div>
+
+      <!-- Task -->
+      <div class="form-group">
+        <label class="form-label">Task</label>
+        <input type="text" class="form-input" id="task-input" placeholder="e.g. Integration by parts chapter 4" value="Integration by parts chapter 4">
+      </div>
+
+      <!-- Duration pills -->
+      <div style="width:100%;max-width:440px;margin-bottom:6px;">
+        <span class="form-label" style="display:block;margin-bottom:8px;">Duration</span>
+      </div>
+      <div class="dur-pills">
+        <button class="dur-pill active" data-dur="1500" onclick="selectDur(this,1500)">25 min<span class="sub">Pomodoro</span></button>
+        <button class="dur-pill" data-dur="2700" onclick="selectDur(this,2700)">45 min<span class="sub">Deep work</span></button>
+        <button class="dur-pill" data-dur="3600" onclick="selectDur(this,3600)">60 min<span class="sub">Power hour</span></button>
+        <button class="dur-pill" data-dur="custom" onclick="selectDur(this,0)">Custom<span class="sub">Set time</span></button>
+      </div>
+
+      <!-- Ambient sounds -->
+      <div style="width:100%;max-width:440px;margin-bottom:8px;">
+        <span class="form-label" style="display:block;margin-bottom:8px;">Ambient sound</span>
+      </div>
+      <div class="sounds-row">
+        <button class="sound-btn active" onclick="toggleSound(this)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span class="slabel">Lo-fi</span>
+        </button>
+        <button class="sound-btn" onclick="toggleSound(this)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>
+          <span class="slabel">Rain</span>
+        </button>
+        <button class="sound-btn" onclick="toggleSound(this)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span class="slabel">White noise</span>
+        </button>
+        <button class="sound-btn" onclick="toggleSound(this)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l-5 5-5-5M17 14l-5-5-5 5"/><path d="M12 3v18"/></svg>
+          <span class="slabel">Forest</span>
+        </button>
+        <button class="sound-btn" onclick="toggleSound(this)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          <span class="slabel">Café</span>
+        </button>
+      </div>
+
+      <button class="btn-start-big" onclick="startSession()">Start Session →</button>
+
+    </div>
+
+    <!-- ══════════ ACTIVE SESSION ══════════ -->
+    <div id="active-session">
+
+      <!-- Ring -->
+      <div id="timer-ring-wrap">
+        <svg id="timer-ring-svg" width="280" height="280" viewBox="0 0 280 280" class="pulsing">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#8B84FF"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="140" cy="140" r="120"/>
+          <circle id="ring-progress" class="ring-fill" cx="140" cy="140" r="120"
+            stroke-dasharray="753.98" stroke-dashoffset="0"/>
+        </svg>
+        <div id="ring-center">
+          <div id="timer-display">25:00</div>
+          <div id="round-label">Round 1 of 4</div>
+        </div>
+      </div>
+
+      <!-- Session info -->
+      <div id="session-info" style="font-size:14px;color:var(--t3);margin-bottom:24px;text-align:center;"></div>
+
+      <!-- Controls -->
+      <div class="ctrl-row">
+        <button class="btn-pause" id="pause-btn" onclick="togglePause()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white" id="pause-icon"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+          <span id="pause-label">Pause</span>
+        </button>
+        <button class="btn-ctrl" onclick="addTime(300)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          +5 min
+        </button>
+        <button class="btn-ctrl" onclick="endSession()" style="color:rgba(239,68,68,.7);border-color:rgba(239,68,68,.2);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          End session
+        </button>
+      </div>
+
+      <!-- Complete overlay -->
+      <div id="complete-overlay">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:14px;color:var(--teal);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;">Session Complete!</div>
+          <div id="xp-pop">+25 XP</div>
+        </div>
+        <div class="clash" style="font-size:22px;font-weight:700;color:var(--text);text-align:center;margin-bottom:8px;">Great work!</div>
+        <div style="font-size:14px;color:var(--t3);text-align:center;margin-bottom:28px;">You studied for 25 minutes. Take a short break.</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="background:rgba(45,212,191,.08);border:1.5px solid rgba(45,212,191,.25);border-radius:12px;padding:12px 20px;text-align:center;">
+            <div style="font-size:11px;color:var(--teal);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Next break</div>
+            <div class="clash" style="font-size:24px;font-weight:700;color:var(--text);" id="break-timer">5:00</div>
+          </div>
+          <button onclick="logAndReset()" style="height:52px;padding:0 24px;background:var(--violet);border:none;border-radius:12px;color:#fff;font-family:'Satoshi',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,.35);transition:all .2s;display:flex;align-items:center;gap:8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Log session
+          </button>
+        </div>
+      </div>
+
+      <!-- XP bar -->
+      <div id="xp-bar" style="padding-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span style="font-size:12px;font-weight:600;color:var(--text);">1h 35m today</span>
+          <div style="flex:1;height:4px;background:rgba(108,99,255,.1);border-radius:4px;max-width:120px;"><div class="xp-fill" style="width:62%;"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
+          <span style="font-size:12px;font-weight:600;color:#D97706;">14 day streak</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;">
+          <span style="font-size:12px;font-weight:600;color:var(--text);">Lvl 7 · 340 XP</span>
+          <div style="width:80px;height:4px;background:rgba(108,99,255,.1);border-radius:4px;"><div class="xp-fill" style="width:45%;"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /timer main -->
+</div><!-- /app -->
+
+<script>
+// ── State ──
+let totalSeconds=1500,remaining=1500,interval=null,isPaused=false,breakInterval=null,breakRem=300;
+const CIRC=753.98;
+
+// ── Helpers ──
+function fmt(s){const m=Math.floor(s/60);const sec=s%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')}
+function updateRing(){
+  const progress=(totalSeconds-remaining)/totalSeconds;
+  const offset=CIRC*progress;
+  document.getElementById('ring-progress').setAttribute('stroke-dashoffset',offset);
+}
+function updateDisplay(){document.getElementById('timer-display').textContent=fmt(remaining)}
+
+// ── Duration pills ──
+function selectDur(btn,secs){
+  document.querySelectorAll('.dur-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(secs>0){totalSeconds=secs;remaining=secs;}
+  else{const t=parseInt(prompt('Enter minutes:','30'))||30;totalSeconds=t*60;remaining=t*60;}
+}
+
+// ── Sound toggle ──
+function toggleSound(btn){
+  btn.classList.toggle('active');
+}
+
+// ── Start ──
+function startSession(){
+  const subj=document.getElementById('subject-select');
+  const task=document.getElementById('task-input').value||'Study session';
+  const subjects={math:'Mathematics',chem:'Chemistry',phys:'Physics'};
+  const info=`${subjects[subj.value]||'Mathematics'} · ${task}`;
+  document.getElementById('session-info').textContent=info;
+
+  document.getElementById('pre-session').style.display='none';
+  document.getElementById('active-session').style.display='flex';
+
+  // breathing blobs
+  document.getElementById('breath1').classList.add('show');
+  document.getElementById('breath2').classList.add('show');
+
+  updateDisplay();
+  updateRing();
+  interval=setInterval(tick,1000);
+}
+
+// ── Tick ──
+function tick(){
+  if(remaining<=0){clearInterval(interval);showComplete();return;}
+  remaining--;
+  updateDisplay();
+  updateRing();
+}
+
+// ── Pause / Resume ──
+function togglePause(){
+  if(isPaused){
+    interval=setInterval(tick,1000);
+    isPaused=false;
+    document.getElementById('pause-label').textContent='Pause';
+    document.getElementById('pause-icon').innerHTML='<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
+    document.getElementById('timer-ring-svg').classList.add('pulsing');
+  }else{
+    clearInterval(interval);
+    isPaused=true;
+    document.getElementById('pause-label').textContent='Resume';
+    document.getElementById('pause-icon').innerHTML='<polygon points="5 3 19 12 5 21 5 3"/>';
+    document.getElementById('timer-ring-svg').classList.remove('pulsing');
+  }
+}
+
+// ── +5 min ──
+function addTime(secs){remaining+=secs;totalSeconds+=secs;updateDisplay();updateRing();}
+
+// ── End ──
+function endSession(){
+  clearInterval(interval);
+  document.getElementById('active-session').style.display='none';
+  document.getElementById('pre-session').style.display='flex';
+  document.getElementById('breath1').classList.remove('show');
+  document.getElementById('breath2').classList.remove('show');
+  isPaused=false;
+  remaining=totalSeconds;
+  updateDisplay();
+  updateRing();
+  document.getElementById('ring-progress').setAttribute('stroke-dashoffset','0');
+  document.getElementById('complete-overlay').style.display='none';
+}
+
+// ── Complete ──
+function showComplete(){
+  // Flash teal ring
+  const ring=document.getElementById('ring-progress');
+  ring.style.animation='ringFlash .6s ease-out forwards';
+  setTimeout(()=>{ring.style.animation='';},700);
+
+  const overlay=document.getElementById('complete-overlay');
+  overlay.style.display='flex';
+  // Start break timer
+  breakRem=300;
+  document.getElementById('break-timer').textContent=fmt(breakRem);
+  breakInterval=setInterval(()=>{
+    breakRem--;
+    document.getElementById('break-timer').textContent=fmt(breakRem);
+    if(breakRem<=0)clearInterval(breakInterval);
+  },1000);
+}
+
+// ── Log & Reset ──
+function logAndReset(){
+  clearInterval(breakInterval);
+  document.getElementById('complete-overlay').style.display='none';
+  endSession();
+}
+</script>
+</body>
+</html>

@@ -1,71 +1,320 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=1280, initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
 <title>Aced — Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  html, body { margin: 0; padding: 0; background: #07070d; min-height: 100%; }
-  body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: #f0f0f5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  *::-webkit-scrollbar { display: none; }
-  /* Background ambience */
-  .stage {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    background:
-      radial-gradient(900px 600px at 20% 10%, rgba(108,99,255,0.10), transparent 60%),
-      radial-gradient(800px 600px at 90% 90%, rgba(168, 85, 247, 0.06), transparent 60%),
-      #07070d;
-    box-sizing: border-box;
-  }
-  .label {
-    text-align: center;
-    margin-top: 18px;
-    color: #5a5a78;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-  }
-  .label b { color: #8888aa; font-weight: 600; }
+:root{
+  --bg:#FAFAFE;--bg2:#FFFFFF;--bg3:#F0EEFF;--bg4:#EDE9FE;
+  --violet:#6C63FF;--violet-d:#4F46E5;--violet-l:#8B84FF;
+  --teal:#2DD4BF;--amber:#F59E0B;--red:#EF4444;
+  --text:#1C1640;--t2:#5C5790;--t3:#9B97C4;--t4:#CCC9E8;
+  --bd:rgba(108,99,255,.14);--bd-s:rgba(108,99,255,.35);
+  --sh-sm:0 1px 8px rgba(91,80,214,.08);
+  --sh:0 4px 20px rgba(91,80,214,.11);
+  --sh-lg:0 8px 36px rgba(91,80,214,.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Satoshi',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:0;height:0}
+.clash{font-family:'Clash Display',system-ui,sans-serif}
+
+/* blobs */
+.blob{position:fixed;pointer-events:none;filter:blur(80px);border-radius:50%;z-index:0}
+.blob1{width:50vw;height:55vh;top:-12%;right:-8%;background:radial-gradient(ellipse,rgba(139,132,255,.18),transparent 70%);animation:drift1 18s ease-in-out infinite}
+.blob2{width:42vw;height:48vh;bottom:-12%;left:-6%;background:radial-gradient(ellipse,rgba(108,99,255,.11),transparent 70%);animation:drift2 22s ease-in-out infinite}
+.blob3{width:28vw;height:32vh;top:38%;left:24%;background:radial-gradient(ellipse,rgba(200,196,255,.14),transparent 70%);animation:drift3 14s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-20px,16px) scale(1.06)}66%{transform:translate(14px,-10px) scale(.96)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(24px,-20px) scale(1.08)}}
+@keyframes drift3{0%,100%{transform:translate(0,0)}40%{transform:translate(-14px,18px)}70%{transform:translate(10px,-8px)}}
+
+/* dot grid */
+.dot-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(108,99,255,.06) 1px,transparent 1px);background-size:28px 28px}
+
+/* devbar */
+#devbar{position:relative;z-index:10;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 16px;background:rgba(255,255,255,.9);border-bottom:1px solid var(--bd);backdrop-filter:blur(12px)}
+.devbar-grp{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:3px}
+.dev-btn{display:flex;align-items:center;padding:5px 12px;border-radius:6px;border:none;background:transparent;color:var(--t2);font-family:'Satoshi',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .16s;white-space:nowrap}
+.dev-btn:hover{color:var(--text);background:rgba(108,99,255,.07)}
+.dev-btn.active{background:rgba(108,99,255,.12);color:var(--violet);border:1px solid rgba(108,99,255,.22)}
+
+/* app shell */
+#app{position:relative;z-index:1;display:flex;height:calc(100vh - 42px)}
+
+/* sidebar */
+#sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);box-shadow:var(--sh-sm);display:flex;flex-direction:column;padding:22px 14px}
+
+/* card */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh-sm)}
+
+/* nav */
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:14px;font-weight:500;color:var(--t2);text-decoration:none;cursor:pointer;transition:background .16s,color .16s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.08);color:var(--violet);font-weight:600}
+
+/* session row */
+.srow{display:flex;align-items:center;justify-content:space-between;padding:13px 14px 13px 20px;border-radius:10px;cursor:pointer;transition:background .16s;position:relative}
+.srow:hover{background:rgba(108,99,255,.04)}
+.srow::before{content:'';position:absolute;left:6px;top:50%;transform:translateY(-50%);width:3px;height:58%;border-radius:2px}
+.srow.sv::before{background:var(--violet);box-shadow:0 0 8px rgba(108,99,255,.4)}
+.srow.st::before{background:var(--teal);box-shadow:0 0 8px rgba(45,212,191,.4)}
+.srow.sa::before{background:var(--amber);box-shadow:0 0 8px rgba(245,158,11,.4)}
+
+/* start btn */
+.btn-start{background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.2);color:var(--violet);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:600;font-family:'Satoshi',sans-serif;cursor:pointer;white-space:nowrap;transition:all .16s}
+.btn-start:hover{background:rgba(108,99,255,.14);border-color:var(--bd-s)}
+
+/* bar */
+.bar-track{height:4px;background:rgba(108,99,255,.08);border-radius:4px}
+.bar-fill{height:4px;border-radius:4px}
+
+/* deadline card */
+.dl-card{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px 15px;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.dl-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+
+/* heat sq */
+.heat{width:11px;height:11px;border-radius:2px}
+
+/* star */
+.star{cursor:pointer;transition:transform .15s}
+.star:hover{transform:scale(1.22)}
+
+/* pro banner */
+#pro-banner{background:linear-gradient(90deg,rgba(108,99,255,.07),rgba(139,132,255,.04));border:1px solid rgba(108,99,255,.16);border-radius:12px;cursor:pointer;transition:background .2s}
+#pro-banner:hover{background:linear-gradient(90deg,rgba(108,99,255,.11),rgba(139,132,255,.07))}
+
+.divider{height:1px;background:rgba(108,99,255,.07)}
 </style>
 </head>
 <body>
-<div id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<div class="dot-grid"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
 
-<script type="text/babel" src="ios-frame.jsx"></script>
-<script type="text/babel" src="dashboard.jsx"></script>
+<!-- devbar -->
+<div id="devbar">
+  <div class="devbar-grp">
+    <a class="dev-btn active" href="Dashboard.html">Dashboard</a>
+    <a class="dev-btn" href="Planner.html">Planner</a>
+    <a class="dev-btn" href="Goals.html">Goals &amp; Habits</a>
+    <a class="dev-btn" href="Timer.html">Focus Timer</a>
+  </div>
+  <span style="width:1px;height:18px;background:var(--bd);margin:0 8px;"></span>
+  <span style="font-size:11px;color:var(--t3);font-weight:500;">Aced · Web App</span>
+</div>
 
-<script type="text/babel" data-presets="react" data-screen-label="02 Dashboard">
-function App() {
-  return (
-    <div className="stage" data-screen-label="02 Dashboard">
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px;margin-bottom:32px;">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6C63FF,#8B84FF);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(108,99,255,.35);flex-shrink:0;">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M9 1.5L2 16.5h3.8l1.6-3.8h3.2l1.6 3.8H16ZM9 6l1.2 3.6H7.8Z" fill="white"/></svg>
+      </div>
+      <span class="clash" style="font-size:20px;font-weight:700;letter-spacing:-.3px;color:var(--text);">Aced</span>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:2px;flex:1;">
+      <a class="nav-item active" href="Dashboard.html">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="Planner.html">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Planner
+      </a>
+      <a class="nav-item" href="Goals.html">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        Goals
+      </a>
+      <a class="nav-item" href="Timer.html">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Timer
+      </a>
+      <div style="position:relative;">
+        <a class="nav-item" href="#" style="color:var(--t4);pointer-events:none;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+          Analytics
+        </a>
+        <div style="position:absolute;right:9px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:3px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.22);border-radius:6px;padding:2px 7px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span style="font-size:10px;font-weight:700;color:var(--violet);">Pro</span>
+        </div>
+      </div>
+    </nav>
+
+    <div style="border-top:1px solid var(--bd);padding-top:14px;display:flex;align-items:center;gap:9px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#2DD4BF);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">J</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">Jawad</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:1px;display:flex;align-items:center;gap:4px;">
+          <span style="width:5px;height:5px;border-radius:50%;background:#2DD4BF;display:inline-block;"></span>Free plan
+        </div>
+      </div>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main style="flex:1;overflow-y:auto;padding:26px 30px;display:flex;flex-direction:column;gap:18px;min-width:0;">
+
+    <!-- Greeting -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;">
       <div>
-        <IOSDevice width={390} height={844} dark={true}>
-          <Dashboard />
-        </IOSDevice>
-        <div className="label">Aced · <b>Dashboard</b> · iPhone 14 · 390 × 844</div>
+        <h1 class="clash" style="font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1.2;color:var(--text);">Good morning, Jawad</h1>
+        <p style="margin-top:5px;font-size:14px;color:var(--t3);font-weight:400;">You have 3 sessions planned today</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:100px;padding:7px 14px;flex-shrink:0;margin-top:2px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
+        <span style="font-size:13px;font-weight:600;color:#D97706;">14 day streak</span>
       </div>
     </div>
-  );
-}
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+    <!-- Sessions + Ring row -->
+    <div style="display:flex;gap:18px;align-items:stretch;">
+
+      <!-- Today's Plan -->
+      <div class="card" style="flex:1 1 60%;padding:20px 22px;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h2 class="clash" style="font-size:15px;font-weight:600;color:var(--text);">Today's Plan</h2>
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.18);border-radius:100px;padding:3px 10px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--violet)"><path d="M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z"/></svg>
+            <span style="font-size:11px;font-weight:600;color:var(--violet);">AI Generated</span>
+          </div>
+        </div>
+        <div class="srow sv">
+          <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">Mathematics</div><div style="font-size:12px;color:var(--t3);margin-top:1px;">Integration by parts</div></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;"><span style="font-size:12px;color:var(--t3);font-weight:500;">09:00 – 10:30</span><button class="btn-start">Start →</button></div>
+        </div>
+        <div class="divider" style="margin:0 6px;"></div>
+        <div class="srow st">
+          <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">Chemistry</div><div style="font-size:12px;color:var(--t3);margin-top:1px;">Organic reactions</div></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;"><span style="font-size:12px;color:var(--t3);font-weight:500;">14:00 – 15:00</span><button class="btn-start">Start →</button></div>
+        </div>
+        <div class="divider" style="margin:0 6px;"></div>
+        <div class="srow sa">
+          <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">Physics</div><div style="font-size:12px;color:var(--t3);margin-top:1px;">Wave mechanics</div></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;"><span style="font-size:12px;color:var(--t3);font-weight:500;">19:00 – 20:00</span><button class="btn-start">Start →</button></div>
+        </div>
+      </div>
+
+      <!-- Progress Ring -->
+      <div class="card" style="flex:0 0 calc(38% - 9px);padding:22px 24px;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:14px;font-weight:600;color:var(--text);width:100%;margin-bottom:18px;" class="clash">Weekly Progress</div>
+        <div style="position:relative;width:128px;height:128px;margin-bottom:12px;">
+          <svg width="128" height="128" viewBox="0 0 128 128" style="transform:rotate(-90deg);filter:drop-shadow(0 0 10px rgba(108,99,255,.25));">
+            <defs><linearGradient id="rg"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#8B84FF"/></linearGradient></defs>
+            <circle cx="64" cy="64" r="52" fill="none" stroke="rgba(108,99,255,.1)" stroke-width="9"/>
+            <circle cx="64" cy="64" r="52" fill="none" stroke="url(#rg)" stroke-width="9" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="81.68"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <span class="clash" style="font-size:26px;font-weight:700;line-height:1;color:var(--text);">4.5h</span>
+            <span style="font-size:11px;color:var(--t3);margin-top:2px;">/6h goal</span>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--t3);margin-bottom:18px;">75% of weekly goal</div>
+        <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:12px;color:var(--t2);font-weight:500;">Mathematics</span><span style="font-size:11px;color:var(--t4);">2h</span></div><div class="bar-track"><div class="bar-fill" style="width:67%;background:linear-gradient(90deg,#6C63FF,#8B84FF);"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:12px;color:var(--t2);font-weight:500;">Chemistry</span><span style="font-size:11px;color:var(--t4);">1.5h</span></div><div class="bar-track"><div class="bar-fill" style="width:50%;background:linear-gradient(90deg,#2DD4BF,#06B6D4);"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:12px;color:var(--t2);font-weight:500;">Physics</span><span style="font-size:11px;color:var(--t4);">1h</span></div><div class="bar-track"><div class="bar-fill" style="width:33%;background:linear-gradient(90deg,#F59E0B,#FBBF24);"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deadlines + Check-in row -->
+    <div style="display:flex;gap:18px;align-items:stretch;">
+
+      <!-- Deadlines -->
+      <div style="flex:1 1 60%;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;">
+          <h3 class="clash" style="font-size:14px;font-weight:600;color:var(--text);">Upcoming Deadlines</h3>
+          <a href="#" style="font-size:12px;color:var(--violet);text-decoration:none;font-weight:500;cursor:pointer;">View all →</a>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div class="dl-card" style="border-color:rgba(239,68,68,.2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;"><span style="font-size:10px;font-weight:600;color:rgba(239,68,68,.7);text-transform:uppercase;letter-spacing:.7px;">Chemistry</span><div style="display:flex;align-items:center;gap:3px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);border-radius:100px;padding:2px 7px;"><div style="width:5px;height:5px;border-radius:50%;background:#EF4444;"></div><span style="font-size:10px;font-weight:600;color:#EF4444;">3 days</span></div></div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">Chemistry Essay</div><div style="font-size:11px;color:var(--t3);margin-top:4px;">Organic Chemistry Unit 3</div>
+          </div>
+          <div class="dl-card" style="border-color:rgba(245,158,11,.2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;"><span style="font-size:10px;font-weight:600;color:rgba(245,158,11,.7);text-transform:uppercase;letter-spacing:.7px;">Physics</span><div style="display:flex;align-items:center;gap:3px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18);border-radius:100px;padding:2px 7px;"><div style="width:5px;height:5px;border-radius:50%;background:#F59E0B;"></div><span style="font-size:10px;font-weight:600;color:#F59E0B;">6 days</span></div></div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">Physics Lab Report</div><div style="font-size:11px;color:var(--t3);margin-top:4px;">Waves &amp; Oscillations</div>
+          </div>
+          <div class="dl-card" style="border-color:rgba(45,212,191,.2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;"><span style="font-size:10px;font-weight:600;color:rgba(45,212,191,.7);text-transform:uppercase;letter-spacing:.7px;">Mathematics</span><div style="display:flex;align-items:center;gap:3px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.18);border-radius:100px;padding:2px 7px;"><div style="width:5px;height:5px;border-radius:50%;background:#2DD4BF;"></div><span style="font-size:10px;font-weight:600;color:#2DD4BF;">12 days</span></div></div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">Maths Final Exam</div><div style="font-size:11px;color:var(--t3);margin-top:4px;">A-Level Paper 2 &amp; 3</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Check-in -->
+      <div class="card" style="flex:0 0 calc(38% - 9px);padding:20px 22px;">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px;" class="clash">How was today's focus?</div>
+        <div id="stars" style="display:flex;gap:5px;margin-bottom:18px;"></div>
+        <div style="font-size:10px;color:var(--t4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Study Streak · 8 Weeks</div>
+        <div id="heatmap" style="display:flex;gap:3px;"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;padding:0 1px;">
+          <span style="font-size:9px;color:var(--t4);">Mon</span><span style="font-size:9px;color:var(--t4);">Wed</span><span style="font-size:9px;color:var(--t4);">Fri</span><span style="font-size:9px;color:var(--t4);">Sun</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro banner -->
+    <div id="pro-banner" style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;">
+      <div style="display:flex;align-items:center;gap:11px;">
+        <div style="width:28px;height:28px;background:linear-gradient(135deg,#6C63FF,#8B84FF);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(108,99,255,.3);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+        </div>
+        <span style="font-size:13px;font-weight:500;"><span style="color:var(--text);font-weight:600;">Unlock grade predictions and full analytics</span><span style="color:var(--t3);"> — see exactly where you'll end up</span></span>
+      </div>
+      <div style="background:linear-gradient(135deg,#6C63FF,#4F46E5);border-radius:8px;padding:7px 15px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0;box-shadow:0 4px 14px rgba(108,99,255,.3);cursor:pointer;">Upgrade to Pro →</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  const c=document.getElementById('stars');let sel=0;
+  const pt='M12 2L14.4 9.4H22L16 13.9L18.4 21.3L12 17L5.6 21.3L8 13.9L2 9.4H9.6Z';
+  function paint(h){
+    const th=h??sel;
+    Array.from(c.children).forEach((s,i)=>{
+      const p=s.querySelector('path');const lit=i<th;
+      p.setAttribute('fill',lit?'#F59E0B':'none');
+      p.setAttribute('stroke',lit?'#F59E0B':'rgba(108,99,255,.25)');
+    });
+  }
+  for(let i=1;i<=5;i++){
+    const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('width','22');s.setAttribute('height','22');s.setAttribute('viewBox','0 0 24 24');s.classList.add('star');
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',pt);p.setAttribute('fill','none');p.setAttribute('stroke','rgba(108,99,255,.25)');p.setAttribute('stroke-width','1.5');p.setAttribute('stroke-linejoin','round');
+    s.appendChild(p);
+    s.addEventListener('click',()=>{sel=i;paint();});
+    s.addEventListener('mouseenter',()=>paint(i));
+    s.addEventListener('mouseleave',()=>paint());
+    c.appendChild(s);
+  }
+})();
+
+(function(){
+  const g=document.getElementById('heatmap');
+  const data=[[0,2,3,2,1,0,1],[1,2,3,3,2,1,0],[0,1,2,3,3,2,1],[2,3,3,2,1,0,0],[1,2,3,3,3,2,1],[0,1,1,2,3,3,2],[2,3,2,1,2,3,1],[1,2,3,2,1,0,0]];
+  const pal=['rgba(108,99,255,.06)','rgba(108,99,255,.2)','rgba(108,99,255,.45)','rgba(108,99,255,.85)'];
+  data.forEach(wk=>{
+    const col=document.createElement('div');col.style.cssText='display:flex;flex-direction:column;gap:3px;flex:1;';
+    wk.forEach(v=>{
+      const sq=document.createElement('div');sq.className='heat';sq.style.background=pal[v];sq.style.border='1px solid rgba(108,99,255,.08)';sq.title=v===0?'No study':v===1?'~1h':v===2?'~2h':'3h+';
+      col.appendChild(sq);
+    });g.appendChild(col);
+  });
+})();
 </script>
 </body>
 </html>
